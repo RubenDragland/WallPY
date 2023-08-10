@@ -51,7 +51,7 @@ class CypherFile:
         path: path to folder
         filename: filename of scan
         """
-        self.fullpath = os.path.join(path, filename, ".ibw")
+        self.fullpath = os.path.join(path, filename+".ibw")
         self.kwargs = kwargs
 
     def __call__(self):
