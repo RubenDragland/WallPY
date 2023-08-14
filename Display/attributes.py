@@ -27,3 +27,21 @@ def add_scalebar(ax, **kwargs):
     )
     ax.add_artist(scalebar0)
     return ax
+
+
+#TODO: Redo and improve.
+def add_cmap(ax, **kwargs):
+    if "cmap_kwargs" not in kwargs:
+        cmap_kwargs = {
+            "cmap": "viridis",
+            "vmin": 0,
+            "vmax": 1,
+            "orientation": "vertical",
+            "fraction": 0.046,
+            "pad": 0.04,
+        }
+    else:
+        cmap_kwargs = kwargs["cmap_kwargs"]
+
+    cbar = plt.colorbar(**cmap_kwargs)
+    return ax, cbar

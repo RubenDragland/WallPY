@@ -49,6 +49,7 @@ def convert_batch_ibw(self):
     """
 
     hy.io.read_file.merge_hdf5(self.scans, self.filename)
+    self.opath = os.path.join(self.path, self.filename + ".hdf5")
 
     return
 
