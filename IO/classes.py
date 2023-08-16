@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm, patches
 import hystorian as hy
 import h5py
-
+import pandas as pd
 import os
 from glob import glob
 import sys
@@ -93,6 +93,19 @@ class CypherFile:
             print("Key not found in hdf5 file.")
             print(keys2paths[key])
             return
+    
+    def get_metadata(self):
+        """
+        Encodes and returns the metadata from the hdf5 file as a pd.DataFrame.
+        """
+        with h5py.File(self.opath, "r") as f:
+            metadata = f[r"metadata/"+rf"{os.path.join(self.path, self.filename)}"]
+            strng= metadata.tolist().decode('ascii', errors='replace')
+            df = pd.DataFrame([sub.split(":") for sub in strng.split("\r")])
+        df.columns = ["key", "value"]
+        df = df.set_index("key")
+        return df
+
 
     def hy_apply(self, function: callable, *args, **kwargs):
         """
@@ -102,7 +115,15 @@ class CypherFile:
         return
     
     def get_dataset_keys(self,f):
+        """
+        Returns all dataset keys in a hdf5 file.
+        """
         keys = []
         f.visit(lambda key: keys.append(key) if isinstance(f[key], h5py.Dataset) else None)
         return keys
+    
+
+
+
+
 
