@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 from rcParams import *
 import sys
+import attributes as attr
 
 # sys.path.append(sys.path[0] + "\\..\\IO")
 # from ..IO.classes import CypherBatch, CypherFile
@@ -60,4 +61,5 @@ class Ax:
         self.ax.axis("off")
         self.fig.colorbar(im, ax=self.ax)
         self.set_labels()
+        attr.add_scalebar(self.ax, cypherfile.x_res)
         return

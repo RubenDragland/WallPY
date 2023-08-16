@@ -64,6 +64,14 @@ class CypherFile:
         from IO import ibw_io
 
         ibw_io.convert_ibw(self)
+
+        im = self["CR"]
+        self.x_dim = im.shape[1]
+        self.y_dim = im.shape[0]
+
+        self.x_res = float(self.get_metadata_key("ScanSize")) / float(self.get_metadata_key("PointsLines"))
+        self.y_res = self.x_res
+
         return
     
     def __getitem__(self, key: str) -> np.ndarray:
@@ -82,8 +90,6 @@ class CypherFile:
             "HR": create_path("HeightRetrace"),
             "ZR": create_path("ZSensorRetrace"),
         }
-
-        print(keys2paths[key])
          
         try:
             with h5py.File(self.opath, "r") as f:
@@ -94,17 +100,28 @@ class CypherFile:
             print(keys2paths[key])
             return
     
-    def get_metadata(self):
+    def get_metadata(self)->pd.DataFrame:
         """
         Encodes and returns the metadata from the hdf5 file as a pd.DataFrame.
         """
         with h5py.File(self.opath, "r") as f:
             metadata = f[r"metadata/"+rf"{os.path.join(self.path, self.filename)}"]
-            strng= metadata.tolist().decode('ascii', errors='replace')
-            df = pd.DataFrame([sub.split(":") for sub in strng.split("\r")])
-        df.columns = ["key", "value"]
-        df = df.set_index("key")
+            strng= np.array(metadata).tolist().decode('ascii', errors='replace')
+            df = pd.DataFrame([sub.split(":") for sub in strng.split("\r")]).loc[:, :1]
+            df.set_index(0, inplace=True)
+        
+        self.meta = df
         return df
+    
+    def get_metadata_key(self, key:str) ->pd.DataFrame.items:
+        """
+        Returns the value of a metadata key.
+        """
+        try:
+            return self.meta.loc[key].item()
+        except AttributeError:
+            self.get_metadata()
+            return self.meta.loc[key].item()
 
 
     def hy_apply(self, function: callable, *args, **kwargs):
@@ -127,3 +144,43 @@ class CypherFile:
 
 
 
+class ExportedXYZ(CypherFile):
+    """
+    Single exported XYZ file/channel from Gwyddion. Used for NT-MDT scans.
+
+    Currently not much functionality.
+    """
+
+    def __init__(self, path:str, filename:str, **kwargs) -> None:
+
+        self.path = path
+        self.filename = filename
+        self.fullpath = os.path.join(path, filename + ".xyz")
+        self.kwargs = kwargs
+
+        with open(self.fullpath, "r") as f:
+            data = pd.read_csv(f, sep="\t", header=None, index_col=None)
+
+        self.x_dim = set(data[0]).__len__()
+        self.y_dim = set(data[1]).__len__()
+
+        self.x_spatial = np.array(sorted(set(data[0])))
+        self.y_spatial = np.array(sorted(set(data[1])))
+        self.values = np.array(data[2]).reshape(self.y_dim, self.x_dim)
+
+        self.x_res = np.mean(np.diff(self.x_spatial))
+        self.y_res = np.mean(np.diff(self.y_spatial))
+
+        return
+    
+    def __call__(self):
+        """
+        Creates the hdf5 file for data analysis.
+        """
+        return None 
+
+    def __getitem__(self, key: str) -> np.ndarray:
+        """
+        Currently only supported functionality. Expand someday when more channels exported and processed by the same xyz file. 
+        """
+        return self.values

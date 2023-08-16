@@ -4,18 +4,20 @@ import matplotlib.patheffects as PathEffects
 
 
 #TODO: Redo and improve.
-def add_scalebar(ax, **kwargs):
+def add_scalebar(ax, res, **kwargs):
     if "scalebar_kwargs" not in kwargs:
-        size = 25 / (0.2 * 930) * 1350
+        size = int(1000 * res*1e6)
 
         scale_kwargs = {
             "size": size,
-            "label": f"25.0 mm",
+            "label": f"{int(size)} um", #TODO: Fix the label.
             "color": "white",
+            "alpha": 0.5,
             "loc": 4,
             "frameon": False,
             "size_vertical": 8,
-            "label_top": False,
+            "label_top": True,
+            # "barcolor": "white",
             # "font_properties": {"size": 12}
         }
     else:
