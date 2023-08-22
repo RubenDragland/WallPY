@@ -53,13 +53,22 @@ class Ax:
 
         self.update_kwargs(**kwargs)
 
-        if self.kwargs["data"] is not None:
-            im = self.ax.imshow(self.kwargs["data"],)
-        else:
-            im= self.ax.imshow(cypherfile[key])
+        #Figure out something universal for this.
 
+        if self.kwargs["data"] is not None:
+            values = self.kwargs["data"]*1e12
+        else:
+            values = cypherfile[key]*1e12
+        
+        if self.kwargs["vmax_std"] is not None:
+            vmax_std = self.kwargs["vmax_std"]
+            vmax = np.std(values)*10
+        else:
+            vmax = None
+        
+        im = self.ax.imshow(values, vmax=vmax)      
         self.ax.axis("off")
-        self.fig.colorbar(im, ax=self.ax)
+        self.fig.colorbar(im, ax=self.ax, label="Current (pA)")
         self.set_labels()
         attr.add_scalebar(self.ax, cypherfile.x_res)
         return

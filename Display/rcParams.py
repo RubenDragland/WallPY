@@ -52,6 +52,17 @@ mpl.rcParams["ytick.labelsize"] = 12
 mpl.rcParams["axes.labelsize"] = 12
 mpl.rcParams["figure.figsize"] = DEFAULT_FIGSIZE  # (8, 6)
 mpl.rcParams["figure.constrained_layout.use"] = True
+plt.rcParams['image.cmap'] = 'inferno'
+
+
+mpl.rcParams.update(
+            {
+                "text.usetex": True,
+                "font.family": "serif",
+                "font.serif": ["Palatino"],
+            }
+        )
+
 
 
 def choose_formatter(incscape=True):
@@ -71,6 +82,7 @@ def choose_formatter(incscape=True):
             }
         )
     return
+
 
 def hex_to_rgb(value):
     """

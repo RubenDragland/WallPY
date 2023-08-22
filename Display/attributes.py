@@ -1,10 +1,43 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.patheffects as PathEffects
+from matplotlib_scalebar.scalebar import ScaleBar
+
+
+
+def add_scalebar(ax, res, **kwargs):
+
+    if "scalabar_kwargs" not in kwargs:
+
+        # unit_rep = "\\mathrm{%s}"%"\\mu m" Something something
+        scale_formatter = lambda value, unit: f"{value} $\mu$m"
+        scale_kwargs ={
+            # "dx": size,
+            "units": f"um", #TODO: Fix the label.
+            "color": "white",
+            "location": 4,
+            "frameon": True,
+            "box_color" :"black",
+            "box_alpha" : 0.25,
+            # "size_vertical": 8,
+            "scale_loc": "bottom",
+            "length_fraction":0.5,
+            "width_fraction": 0.01,
+            "scale_formatter":scale_formatter
+            # "label_top": True,
+
+        }
+    else:
+
+        scale_kwargs =kwargs["scalebar_kwargs"]
+    size = res*1e6
+    bar = ScaleBar(dx = size, **scale_kwargs)
+    ax.add_artist(bar)
+    return ax
 
 
 #TODO: Redo and improve.
-def add_scalebar(ax, res, **kwargs):
+def add_anchored_scalebar(ax, res, **kwargs):
     if "scalebar_kwargs" not in kwargs:
         size = int(1000 * res*1e6)
 

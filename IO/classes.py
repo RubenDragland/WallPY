@@ -8,6 +8,9 @@ import os
 from glob import glob
 import sys
 
+import hyperspy.api as hs
+import tifffile
+
 
 class CypherBatch:
     def __init__(self, path:str, filename:str, **kwargs):
@@ -184,3 +187,50 @@ class ExportedXYZ(CypherFile):
         Currently only supported functionality. Expand someday when more channels exported and processed by the same xyz file. 
         """
         return self.values
+    
+
+
+class TifFile(CypherFile):
+    """
+    Class for handling SEM images
+    """
+
+    def __init__(self,path:str, filename:str, **kwargs):
+
+        self.path = path
+        self.filename = filename
+        self.fullpath = os.path.join(path, filename+".tif") #TODO: Or tiff? What to do?
+        self.opath = os.path.join(self.path, self.filename + ".hspy")
+        self.kwargs = kwargs
+
+        return
+    
+    def __call__(self, hyperspy:bool = True):
+        """
+        Creates the hdf5 file for data analysis.
+        """
+        if hyperspy:
+            img = hs.load(self.fullpath)
+            img.save(self.opath) #TODO: Test and find res
+
+        else:
+            img = tifffile.imread(self.fullpath)
+            meta = tifffile.tiffFile(self.fullpath)
+
+            self.x_dim = img.shape[1]
+            self.y_dim = img.shape[0]
+
+            self.x_res = meta.fei_metadata['EScan']['PixelWidth']
+            self.y_res = meta.fei_metadata['EScan']['PixelHeight']
+
+            #TODO: Save to hdf5 file but necessary?
+
+
+        return img
+    
+    def __getitem__(self, key: str) -> np.ndarray:
+
+        # h = hs.load(self.opath)
+        return 
+
+
