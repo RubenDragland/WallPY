@@ -21,6 +21,7 @@ class Ax:
         "data": None,
         "vmin": 0,
         "vmax": None,
+        "vmax_std": None,
     } #TODO: Find the necessary kwargs
 
     def __init__(self, fig, **kwargs):
@@ -62,7 +63,7 @@ class Ax:
         
         if self.kwargs["vmax_std"] is not None:
             vmax_std = self.kwargs["vmax_std"]
-            vmax = np.std(values)*10
+            vmax = np.std(values)*vmax_std
         else:
             vmax = None
         

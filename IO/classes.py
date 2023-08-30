@@ -10,9 +10,138 @@ import sys
 
 import hyperspy.api as hs
 import tifffile
+import gwyfile as gwy
+import re
+
+
+
+    
+def find_key(keywords: dict, title: str) -> str:
+        """
+        Finds the key in the keywords dictionary based on channel title.
+        Universal function for all classes.
+        """
+
+        for key, elems in keywords.items():
+            for elem in elems:
+                match = re.search(elem, title)
+                if match is not None:
+                    return key
+        return None
+
+class GwyFile:
+
+    """
+        Believed to be an universal class from reading AFM scans in python.
+        The key is to use Gwyddion to do an initial filtering of saved scans from experiments. 
+        Next, use Gwyddion to export all the different data formats to .gwy-file. 
+        The .gwy-file can then be read by this class using the gwyfile package.
+        CypherFile is suspected to perform better than this class, but will nevertheless be compatible. However, less information.
+        Note limited amount of metadata extractable. CypherFile is better for this. Tip type needs additional logging regardless. 
+        
+    """
+
+
+    keywords = {
+            "Height": ["Height"],
+            "Current": ["Current"],
+            "Deflection": ["DFL", "Deflection"],
+            "ZSensor": ["ZSensor"],
+            "Voltage": ["Voltage"],
+            "Amplitude": ["Amp", "Amplitude", "Mag"],
+            "Phase": ["Phase"],
+        }
+    modes = {
+            "Forward": ["F:", "Trace", "Forward"],
+            "Backward": ["B:", "Retrace", "Backward" ]
+        }
+
+    settings = {
+            #TODO: Get more meta data from scan. Current/voltage/frerquency etc. Possibly need for manual logging system.
+
+        }
+
+
+    def __init__(self, path:str, filename:str, **kwargs):
+        """
+        path: path to folder
+        filename: filename of scan
+        """
+        self.path = path
+        self.filename = filename
+        self.fullpath = os.path.join(path, filename+".gwy")
+        self.opath = os.path.join(self.path, self.filename + ".hdf5")
+        self.kwargs = kwargs
+    
+    def __call__(self):
+        """
+        Currently no functionality. Keep it as gwy-dict. Perhaps store transformed data in hdf5 file or something?
+        Idea: Redefine keys based on metadata, and store the data in a hdf5 file.
+        """
+
+        obj = gwy.load(self.fullpath)
+        channels = gwy.util.get_datafields(obj)
+
+        with h5py.File(self.opath, "w") as f:
+            for id, key in enumerate(channels.keys()):
+
+                #TODO: Figure out name of channels. F/B are for forward/backward, respectively. 
+
+                category = str(find_key(GwyFile.keywords, key))
+                mode = str(find_key(GwyFile.modes, key))
+                unique = id #str(np.round(np.max(1e6*channels[key].data)-np.min(1e6*channels[key].data),3)) 
+
+                name = f"{category}_{mode}_{unique}"
+                print(name)
+                                
+                f.create_group(name)
+                f[name].create_dataset("data", data=channels[key].data)
+                f[name].attrs["title"] = name
+                f[name].attrs["category"] = category
+                f[name].attrs["mode"] = mode
+                f[name].attrs["unit"] = channels[key].si_unit_z.unitstr
+                f[name].attrs["xsize"] = channels[key].xreal
+                f[name].attrs["ysize"] = channels[key].yreal
+                f[name].attrs["xres"] = channels[key].xreal / 1
+
+        return
+    
+    def __getitem__(self, key: str) -> list:
+        """
+        Returns the data of a channel based on category and mode. Returns a list if multiple channels are found.
+        TODO: Adjust so that B and F are valid modes.
+        """
+        datas = []
+
+        with h5py.File(self.opath, "r") as f:
+            for channel in f.keys():
+
+                keyword = find_key(GwyFile.keywords, key)
+                mode = find_key(GwyFile.modes, key)
+                if ( re.search( f[channel].attrs["category"], keyword ) is not None) and (re.search(f[channel].attrs["mode"], mode) is not None):
+                    datas.append(np.array(f[channel]["data"]))
+
+        if datas == []:
+            print("No data found.")
+            return None
+        else:
+            return datas
+    
+    def get_dataset_keys(self):
+        """
+        Returns all dataset keys in a hdf5 file.
+        """
+        keys = []
+        with h5py.File(self.opath, "r") as f:
+            f.visit(lambda key: keys.append(key) if isinstance(f[key], h5py.Dataset) else None)
+        return keys
+
 
 
 class CypherBatch:
+
+
+
     def __init__(self, path:str, filename:str, **kwargs):
         """
         A class for batch processing of Cypher scans in a folder.
@@ -49,6 +178,24 @@ class CypherBatch:
 
 
 class CypherFile:
+
+
+    keywords = {
+            "H": ["Height", " H"],
+            "C": ["Current", " C"],
+            "D": ["DFL", "Deflection", " D"],
+            "Z": ["ZSensor", " Z"],
+            # "V": ["Voltage"],
+            # "Amplitude": ["Amp", "Amplitude", "Mag"], TODO: Add these channels. Bit jalla, but okay.
+            # "Phase": ["Phase"],
+        }
+    modes = {
+            "T": ["F:", "Trace", "Forward", "T "],
+            "R": ["B:", "Retrace", "Backward", "R " ],
+            "R2": ["B2:", "Retrace2", "Backward2", "R2 " ],
+        }
+    
+
     def __init__(self, path:str, filename:str, **kwargs):
         """
         path: path to folder
@@ -77,7 +224,7 @@ class CypherFile:
 
         return
     
-    def __getitem__(self, key: str) -> np.ndarray:
+    def __getitem__(self, key_input: str) -> np.ndarray:
 
         def create_path(string: str) -> str:
             """
@@ -96,6 +243,8 @@ class CypherFile:
          
         try:
             with h5py.File(self.opath, "r") as f:
+                key_input = f" {key_input} "
+                key = find_key(CypherFile.keywords, key_input) + find_key(CypherFile.modes, key_input)
 
                 return np.array(f[keys2paths[key]])
         except KeyError:
@@ -134,14 +283,79 @@ class CypherFile:
         hy.m_apply(self.fullpath, function, *args, **kwargs)
         return
     
-    def get_dataset_keys(self,f):
+    def get_dataset_keys(self):
         """
         Returns all dataset keys in a hdf5 file.
         """
         keys = []
-        f.visit(lambda key: keys.append(key) if isinstance(f[key], h5py.Dataset) else None)
+        with h5py.File(self.opath, "r") as f:
+            f.visit(lambda key: keys.append(key) if isinstance(f[key], h5py.Dataset) else None)
         return keys
     
+
+
+class TifFile(CypherFile):
+    """
+    Class for handling SEM images
+    """
+
+    def __init__(self,path:str, filename:str, **kwargs):
+
+        self.path = path
+        self.filename = filename
+        self.fullpath = os.path.join(path, filename+".tif") #TODO: Or tiff? What to do?
+        self.opath = os.path.join(self.path, self.filename + ".hspy")
+        self.kwargs = kwargs
+
+        return
+    
+    def __call__(self, hyperspy:bool = True):
+        """
+        Creates the hdf5 file for data analysis.
+        """
+        try: 
+            self.hyperspy = self.kwargs["hyperspy"] and hyperspy
+        except KeyError:
+            self.hyperspy = hyperspy
+        finally:
+
+            if self.hyperspy:
+                img = hs.load(self.fullpath)
+                img.save(self.opath) #TODO: Test and find res
+
+            else:
+                img = tifffile.imread(self.fullpath)
+                meta = tifffile.tiffFile(self.fullpath)
+
+                self.x_dim = img.shape[1]
+                self.y_dim = img.shape[0]
+
+                self.x_res = meta.fei_metadata['EScan']['PixelWidth']
+                self.y_res = meta.fei_metadata['EScan']['PixelHeight']
+
+                #TODO: Save to hdf5 file but necessary?
+                self.opath = os.path.join(self.path, self.filename + ".hdf5")
+
+
+        return img
+    
+    def __getitem__(self, key: str) -> np.ndarray:
+
+        if self.hyperspy:
+            h = hs.load(self.opath)
+            if key == "all":
+                return (h.data, h.metadata)
+            else:
+                return h[key].data #TODO: Fix and test.
+        else:
+            with h5py.File(self.opath, "r") as f:
+                if key == "all":
+                    return (np.array(f["data"]), np.array(f["meta"]) )
+                else:
+                    return np.array(f[key])
+
+
+
 
 
 
@@ -149,7 +363,7 @@ class CypherFile:
 
 class ExportedXYZ(CypherFile):
     """
-    Single exported XYZ file/channel from Gwyddion. Used for NT-MDT scans.
+    Single exported XYZ file/channel from Gwyddion. Not used for NT-MDT scans anymore.
 
     Currently not much functionality.
     """
@@ -187,50 +401,3 @@ class ExportedXYZ(CypherFile):
         Currently only supported functionality. Expand someday when more channels exported and processed by the same xyz file. 
         """
         return self.values
-    
-
-
-class TifFile(CypherFile):
-    """
-    Class for handling SEM images
-    """
-
-    def __init__(self,path:str, filename:str, **kwargs):
-
-        self.path = path
-        self.filename = filename
-        self.fullpath = os.path.join(path, filename+".tif") #TODO: Or tiff? What to do?
-        self.opath = os.path.join(self.path, self.filename + ".hspy")
-        self.kwargs = kwargs
-
-        return
-    
-    def __call__(self, hyperspy:bool = True):
-        """
-        Creates the hdf5 file for data analysis.
-        """
-        if hyperspy:
-            img = hs.load(self.fullpath)
-            img.save(self.opath) #TODO: Test and find res
-
-        else:
-            img = tifffile.imread(self.fullpath)
-            meta = tifffile.tiffFile(self.fullpath)
-
-            self.x_dim = img.shape[1]
-            self.y_dim = img.shape[0]
-
-            self.x_res = meta.fei_metadata['EScan']['PixelWidth']
-            self.y_res = meta.fei_metadata['EScan']['PixelHeight']
-
-            #TODO: Save to hdf5 file but necessary?
-
-
-        return img
-    
-    def __getitem__(self, key: str) -> np.ndarray:
-
-        # h = hs.load(self.opath)
-        return 
-
-
