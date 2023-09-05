@@ -139,32 +139,98 @@ def add_polarization_direction(ax, **polarization_kwargs):
     return ax
 
 
-#TODO: Redo and improve.
-def add_anchored_scalebar(ax, res, **kwargs):
-    if "scalebar_kwargs" not in kwargs:
-        size = int(1000 * res*1e6)
+def add_alphabetic_label(ax, letter, **kwargs):
 
-        scale_kwargs = {
-            "size": size,
-            "label": f"{int(size)} um", #TODO: Fix the label.
+    formatter ={
+        0: lambda letter,:   f"{letter}",
+        1: lambda letter:   f"{letter})",
+        2: lambda letter:   f"({letter})",
+    }
+
+    fig = ax.get_figure()
+    import matplotlib.transforms as mtransforms
+    trans = mtransforms.ScaledTranslation(0.05,-0.17,fig.dpi_scale_trans)
+
+    alpha_kwargs ={
             "color": "white",
-            "alpha": 0.5,
-            "loc": 4,
-            "frameon": False,
-            "size_vertical": 8,
-            "label_top": True,
-            # "barcolor": "white",
-            # "font_properties": {"size": 12}
+            "location": 1,
+            "frameon": True,
+            "box_color" :"black",
+            "box_alpha" : 0.5,
+            "formatter":0,
+            "pad": 0,
+            "location": "upper left",
         }
-    else:
-        scale_kwargs = kwargs["scalebar_kwargs"]
+        
 
-    scalebar0 = AnchoredSizeBar(ax.transData, **scale_kwargs)
-    scalebar0.txt_label._text.set_path_effects(
-        [PathEffects.withStroke(linewidth=2, foreground="black", capstyle="round")]
-    )
-    ax.add_artist(scalebar0)
+    if "alpha_kwargs" not in kwargs:
+
+        for key, value in kwargs.items():
+            if key in alpha_kwargs:
+                alpha_kwargs[key] = value
+
+    
+    else: #TODO: Finish and prob do not use scalebar package. Use instead normal artist. 
+
+        new_kwargs = kwargs["alpha_kwargs"]
+
+        for key, value in new_kwargs.items():
+            if key in alpha_kwargs:
+                alpha_kwargs[key] = value
+    from matplotlib.offsetbox import AnchoredText
+
+    # text = AnchoredText(formatter[alpha_kwargs["formatter"]](letter), color=alpha_kwargs["color"], loc=alpha_kwargs["location"], frameon=alpha_kwargs["frameon"], bbox_to_anchor=(0.0, 1.0), bbox_transform=ax.transAxes, pad=alpha_kwargs["pad"], prop=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"]))
+    text = ax.text(0,1, formatter[alpha_kwargs["formatter"]](letter), horizontalalignment="left", verticalalignment="top", color=alpha_kwargs["color"], transform=ax.transAxes, bbox=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"], edgecolor="none", pad=alpha_kwargs["pad"]))
+    bbox = text.get_window_extent().transformed(ax.transAxes.inverted())
+    # print(bbox.x0, bbox.y0, bbox.x1, bbox.y1)
+    # fs = text.get_fontsize()
+    # print(fs)
+    # ax.add_artist(text)
+    width = bbox.width
+    height = bbox.height
+
+    print(width, height)
+
+    extents = text.get_bbox_patch().get_extents()
+    x0 = extents.x0
+    y0 = extents.y0
+    x1 = extents.x1
+    y1 = extents.y1
+
+    print(x0, y0, x1, y1)
+
+    # text.set_position((width*abs(x0)*abs(x1-x0),  (1-width*abs(y0)*(y1-y0) )))
+    
     return ax
+
+
+
+# #TODO: Redo and improve.
+# def add_anchored_scalebar(ax, res, **kwargs):
+#     if "alpha_kwargs" not in kwargs:
+#         size = int(1000 * res*1e6)
+
+#         scale_kwargs = {
+#             "size": size,
+#             "label": f"{int(size)} um", #TODO: Fix the label.
+#             "color": "white",
+#             "alpha": 0.5,
+#             "loc": 4,
+#             "frameon": False,
+#             "size_vertical": 8,
+#             "label_top": True,
+#             # "barcolor": "white",
+#             # "font_properties": {"size": 12}
+#         }
+#     else:
+#         scale_kwargs = kwargs["scalebar_kwargs"]
+
+#     scalebar0 = AnchoredSizeBar(ax.transData, **scale_kwargs)
+#     scalebar0.txt_label._text.set_path_effects(
+#         [PathEffects.withStroke(linewidth=2, foreground="black", capstyle="round")]
+#     )
+#     ax.add_artist(scalebar0)
+#     return ax
 
 
 #TODO: Redo and improve.

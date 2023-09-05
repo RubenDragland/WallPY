@@ -4,8 +4,6 @@ from rcParams import *
 import sys
 import attributes as attr
 
-# sys.path.append(sys.path[0] + "\\..\\IO")
-# from ..IO.classes import CypherBatch, CypherFile
 
 
 
@@ -61,7 +59,7 @@ class Ax:
 
         self.update_kwargs(**kwargs)
 
-        #Figure out something universal for this.
+        #TODO: More universal. 
 
         if self.kwargs["values"] is not None:
             values = self.kwargs["values"]*1e12
@@ -96,6 +94,7 @@ class Ax:
                 "height": 0.5,
                 "indicate": True,
                 "values": None,
+                "label": "value"
             }
         
         for kwarg_key, kwarg_value in default_kwargs.items():
@@ -115,7 +114,7 @@ class Ax:
         
         im = self.ax.imshow(values, vmax=vmax, origin="lower")      
         self.ax.axis("off")
-        self.fig.colorbar(im, ax=self.ax, label="Value") #TODO: Fix the label in kwargs or something.
+        self.fig.colorbar(im, ax=self.ax, label=inset_kwargs["label"]) #TODO: Fix the label in kwargs or something.
         attr.add_scalebar(self.ax, datafile.x_res)
 
 
@@ -131,12 +130,6 @@ class Ax:
                 l.set_linestyle("--")
                 l.set_color("black")
                 l.set_linewidth(1)
-
-                # if l.get_visible():
-                #     l.set_visible(False)
-                # else:
-                #     l.set_visible(True)
-            # lines.set_linewidth(2)
 
 
         

@@ -5,6 +5,7 @@ from axes import Ax
 # from ..IO.classes import CypherBatch, CypherFile
 import os
 import time
+import attributes as attr
 
 class FigureSinglePlot:
 
@@ -72,7 +73,6 @@ class FigureSubplots(FigureSinglePlot):
         return
     
     def create_figure(self):
-        #TODO: Fix figsize. Do standard figsize per ax.
 
         if self.kwargs["standard_size"]:
             self.fig = plt.figure(figsize=(self.kwargs["figsize"][0]*self.kwargs["ncols"], self.kwargs["figsize"][1]*self.kwargs["nrows"]))
@@ -89,6 +89,7 @@ class FigureSubplots(FigureSinglePlot):
         subplot_kwargs = {
             "sharex": None,
             "sharey": None,
+            "letter": "a",
         }
 
         for key, value in subplot_kwargs.items():
@@ -110,3 +111,8 @@ class FigureSubplots(FigureSinglePlot):
             self.Axes.append(Ax(self.fig, ax=ax, **kwargs))
 
         return self.Axes[-1]
+    
+    def label_subplots(self, **kwargs):
+        for i, Ax in enumerate(self.Axes):
+            attr.add_alphabetic_label(Ax.ax, chr(i+97) , **kwargs)
+        return
