@@ -59,7 +59,9 @@ mpl.rcParams.update(
             {
                 "text.usetex": True,
                 "font.family": "serif",
-                "font.serif": ["Palatino"],
+                "font.serif": ["Tex Gyre Pagella"],
+                "mathtext.default": "regular",
+                "mathtext.fontset": "cm",
             }
         )
 
@@ -78,7 +80,7 @@ def choose_formatter(incscape=True):
             {
                 "text.usetex": True,
                 "font.family": "serif",
-                "font.serif": ["Palatino"],
+                "font.serif": ["Baskerville"]#["Palatino"],
             }
         )
     return

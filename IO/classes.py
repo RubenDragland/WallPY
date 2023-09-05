@@ -27,6 +27,8 @@ def find_key(keywords: dict, title: str) -> str:
                 match = re.search(elem, title)
                 if match is not None:
                     return key
+                
+        print(title, "not found in keywords dictionary.")
         return None
 
 class GwyFile:
@@ -181,18 +183,18 @@ class CypherFile:
 
 
     keywords = {
-            "H": ["Height", " H"],
-            "C": ["Current", " C"],
-            "D": ["DFL", "Deflection", " D"],
-            "Z": ["ZSensor", " Z"],
+            "H": ["Height", r"^H."],
+            "C": ["Current", r"^C."],
+            "D": ["DFL", "Deflection", r"^D."],
+            "Z": ["ZSensor", r"^Z."],
             # "V": ["Voltage"],
             # "Amplitude": ["Amp", "Amplitude", "Mag"], TODO: Add these channels. Bit jalla, but okay.
             # "Phase": ["Phase"],
         }
     modes = {
-            "T": ["F:", "Trace", "Forward", "T "],
-            "R": ["B:", "Retrace", "Backward", "R " ],
-            "R2": ["B2:", "Retrace2", "Backward2", "R2 " ],
+            "T": ["F:", "Trace", "Forward", ".T$"],
+            "R": ["B:", "Retrace", "Backward", ".R$" ],
+            "R2": ["B2:", "Retrace2", "Backward2", ".R2$" ],
         }
     
 
@@ -243,7 +245,7 @@ class CypherFile:
          
         try:
             with h5py.File(self.opath, "r") as f:
-                key_input = f" {key_input} "
+                key_input = f"{key_input}" #TODO: Add space or not?
                 key = find_key(CypherFile.keywords, key_input) + find_key(CypherFile.modes, key_input)
 
                 return np.array(f[keys2paths[key]])

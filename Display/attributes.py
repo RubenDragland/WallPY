@@ -15,8 +15,8 @@ def add_scalebar(ax, res, **kwargs):
 
     if "scalabar_kwargs" not in kwargs:
 
-        # unit_rep = "\\mathrm{%s}"%"\\mu m" Something something
-        scale_formatter = lambda value, unit: f"{value} $\mu$m"
+        # unit_rep = "\\mathrm{%s}"%"\\mu m" Something something r"$\mathrm{%s}$"%"$\mu$m" r"$\si{\micro\meter}$"#
+        scale_formatter = lambda value, unit:   f"{value} "  +r"$\mathrm{\mu}$m"
         scale_kwargs ={
             # "dx": size,
             "units": f"um", #TODO: Fix the label.
