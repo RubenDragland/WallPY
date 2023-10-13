@@ -8,6 +8,41 @@ import attributes as attr
 
 
 class Ax:
+    """
+    A class for handling an ax object in a matplotlib figure.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        The figure to add the ax object to.
+    **kwargs : dict, optional
+        The keyword arguments for the ax object. The default is:
+
+            {
+            "xlabel": "",
+            "ylabel": "",
+            "legend": False,
+            "labels": [],
+            "scalebar": False,
+            "colorbar": False,
+            "values": None,
+            "vmin": 0,
+            "vmax": None,
+            "vmax_std": None,
+            "origin": "lower",
+            }
+
+    Methods
+    -------
+    set_labels()
+        Sets the x- and y-labels of the ax object.
+    update_kwargs(**kwargs)
+        Updates the keyword arguments for the ax object.
+    plot_cAFM(datafile, key:str="CR", **kwargs)
+        Plots a cAFM scan.
+    plot_inset(datafile, key:str="CR", **inset_kwargs)
+        Plots an inset of a cAFM scan.
+    """
 
     default_kwargs = {
         "xlabel": "",
@@ -21,7 +56,9 @@ class Ax:
         "vmax": None,
         "vmax_std": None,
         "origin": "lower",
-    } #TODO: Find the necessary kwargs
+        #TODO: Add axis off? 
+        }
+
 
     def __init__(self, fig, **kwargs):
 

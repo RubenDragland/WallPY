@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm, patches
@@ -40,6 +41,28 @@ class GwyFile:
         The .gwy-file can then be read by this class using the gwyfile package.
         CypherFile is suspected to perform better than this class, but will nevertheless be compatible. However, less information.
         Note limited amount of metadata extractable. CypherFile is better for this. Tip type needs additional logging regardless. 
+
+        Container for python-processing of data from a gwy-file.
+
+        Attributes
+        ----------
+
+        path: str
+            path to folder containing scans
+        filename: str
+            filename of scan
+        **kwargs: dict, optional
+            keyword arguments for all classes. Universal.
+        
+        Methods
+        -------
+
+        __call__:
+            Idea: Redefine keys based on metadata, and store the data in a hdf5 file.
+        __getitem__:
+            Returns the data of a channel based on category and mode. Returns a list if multiple channels are found.
+        get_dataset_keys:
+            Returns all dataset keys in a hdf5 file.
         
     """
 
@@ -49,7 +72,7 @@ class GwyFile:
             "Current": ["Current"],
             "Deflection": ["DFL", "Deflection"],
             "ZSensor": ["ZSensor"],
-            "Voltage": ["Voltage"],
+            "Voltage": ["Voltage", "Ext", "Iprobe"], #TODO: Know how to sort these.
             "Amplitude": ["Amp", "Amplitude", "Mag"],
             "Phase": ["Phase"],
         }
@@ -84,6 +107,9 @@ class GwyFile:
         obj = gwy.load(self.fullpath)
         channels = gwy.util.get_datafields(obj)
 
+        self.channel_names = []
+        print("Channels found: ")
+
         with h5py.File(self.opath, "w") as f:
             for id, key in enumerate(channels.keys()):
 
@@ -94,6 +120,7 @@ class GwyFile:
                 unique = id #str(np.round(np.max(1e6*channels[key].data)-np.min(1e6*channels[key].data),3)) 
 
                 name = f"{category}_{mode}_{unique}"
+                self.channel_names.append(name)
                 print(name)
                                 
                 f.create_group(name)
@@ -104,14 +131,16 @@ class GwyFile:
                 f[name].attrs["unit"] = channels[key].si_unit_z.unitstr
                 f[name].attrs["xsize"] = channels[key].xreal
                 f[name].attrs["ysize"] = channels[key].yreal
-                f[name].attrs["xres"] = channels[key].xreal / 1
+                f[name].attrs["xres"] = channels[key].xreal / channels[key].data.shape[1]
 
         return
     
-    def __getitem__(self, key: str) -> list:
+    def get_by_key(self, key: str) -> list:
+
         """
         Returns the data of a channel based on category and mode. Returns a list if multiple channels are found.
         TODO: Adjust so that B and F are valid modes.
+        TODO: Can both modes work?
         """
         datas = []
 
@@ -128,6 +157,18 @@ class GwyFile:
             return None
         else:
             return datas
+
+
+    
+    def __getitem__(self, index: str) -> np.ndarray:
+        """
+        Returns the data of a channel based on index.
+        """
+        name = self.channel_names[index]
+
+        with h5py.File(self.opath, "r") as f:
+            return np.array(f[name]["data"]) 
+
     
     def get_dataset_keys(self):
         """
@@ -137,6 +178,18 @@ class GwyFile:
         with h5py.File(self.opath, "r") as f:
             f.visit(lambda key: keys.append(key) if isinstance(f[key], h5py.Dataset) else None)
         return keys
+    
+    def index_metadata(self, index: int, feature=None) -> Any:
+        """
+        Returns the metadata of a channel based on index.
+        """
+        name = self.channel_names[index]
+        if feature is None:
+            with h5py.File(self.opath, "r") as f:
+                return f[name].attrs.items()
+        else:
+            with h5py.File(self.opath, "r") as f:
+                return f[name].attrs[feature]
 
 
 
@@ -299,6 +352,7 @@ class CypherFile:
 class TifFile(CypherFile):
     """
     Class for handling SEM images
+    TODO: Why inheritance to CypherFile?
     """
 
     def __init__(self,path:str, filename:str, **kwargs):

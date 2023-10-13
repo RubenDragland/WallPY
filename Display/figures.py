@@ -9,6 +9,32 @@ import attributes as attr
 
 class FigureSinglePlot:
 
+    """
+    A class for handling a figure with a single matplotlib ax.
+
+    Attributes
+    ----------
+    datafile : object
+        The container of the data to plot.
+    **kwargs : dict, optional
+        The keyword arguments for the figure. The default is:
+            {
+            "show": False,
+            "path": "",
+            "filename": f"FigureSinglePlot_{int(time.time())}",
+            "extension": ".pdf",
+            "figsize": (DEFAULT_FIGSIZE[0], DEFAULT_FIGSIZE[1]),
+            "dpi": 300,
+            }
+    
+    Methods
+    -------
+    create_figure()
+        Creates the figure and initializes the ax object.
+    __call__()
+        Finalizes and saves the figure to the specified path.    
+    """
+
 
     default_kwargs = {
         "show": False,
@@ -52,6 +78,39 @@ class FigureSinglePlot:
         
 class FigureSubplots(FigureSinglePlot):
 
+    """
+    A class for handling a figure with multiple matplotlib ax objects.
+
+    Attributes
+    ----------
+    databatch : object
+        The container of the data to plot.
+    **kwargs : dict, optional
+        The keyword arguments for the figure. The default is:
+            {
+            "show": False,
+            "path": "",
+            "filename": f"FigureSubplots_{int(time.time())}",
+            "extension": ".pdf",
+            "figsize": (DEFAULT_FIGSIZE[0], DEFAULT_FIGSIZE[1]),
+            "dpi": 300,
+            "nrows": 1,
+            "ncols": 2,
+            "standard_size": True,
+            }
+
+    Methods
+    -------
+    create_figure()
+        Creates the figure and initializes the ax objects.
+    create_subplot()
+        Creates a subplot and returns the ax object.
+    label_subplots()
+        Adds alphabetic labels to the ax objects.
+    __call__()
+        Finalizes and saves the figure to the specified path.
+    """
+
     add_on_kwargs = {
         "filename": f"FigureSubplots_{int(time.time())}",
         "nrows": 1,
@@ -60,6 +119,7 @@ class FigureSubplots(FigureSinglePlot):
     } #TODO: Find the necessary kwargs
 
     def __init__(self, databatch, **kwargs ):
+        #TODO: Not necessary to include data file. 
 
         self.kwargs = kwargs
 
@@ -85,6 +145,8 @@ class FigureSubplots(FigureSinglePlot):
     
     def create_subplot(self, row=0, col=0, row_span=None, col_span=None, **kwargs):
         #TODO: Tungvint
+        #TODO: Docstring
+        #TODO: Better communicate that span is end point.
 
         subplot_kwargs = {
             "sharex": None,

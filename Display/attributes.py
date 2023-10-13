@@ -12,6 +12,35 @@ import numpy as np
 
 
 def add_scalebar(ax, res, **kwargs):
+    """
+    Adds a scalebar to the lower right corner of the ax object provided.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The ax object to add the scalebar to.
+    res : float
+        The resolution of the image in meters per pixel.
+    kwargs : dict, optional
+        The keyword arguments for the scalebar. The default is:
+            {
+            "units": f"um",
+            "color": "white",
+            "location": 4,
+            "frameon": True,
+            "box_color" :"black",
+            "box_alpha" : 0.25,
+            "scale_loc": "bottom",
+            "length_fraction":0.5,
+            "width_fraction": 0.01,
+            "scale_formatter":scale_formatter
+            }
+    
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The ax object with the scalebar added.
+    """
 
     if "scalabar_kwargs" not in kwargs:
 
@@ -27,9 +56,9 @@ def add_scalebar(ax, res, **kwargs):
             "box_alpha" : 0.25,
             # "size_vertical": 8,
             "scale_loc": "bottom",
-            "length_fraction":0.5,
+            "length_fraction":0.35,
             "width_fraction": 0.01,
-            "scale_formatter":scale_formatter
+            #"scale_formatter":scale_formatter
             # "label_top": True,
 
         }
@@ -45,22 +74,31 @@ def add_scalebar(ax, res, **kwargs):
 def add_polarization_direction(ax, **polarization_kwargs):
     """
     Adds a polarization direction to the plot at the specified position.
-    The function makes sure the arrow is a sufficient size based on the size of the plot.
+    The function makes sure the arrow is a sufficient size based on the size of the plot; i.e. hardcoded sizes for now.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The ax object to add the polarization direction to.
+    polarization_kwargs : dict, optional
+        The keyword arguments for the polarization direction. The default is:
+            {
+            "type": "out",
+            "color": "white",
+            "lw": 1,
+            "alpha": 1,
+            "pos": (100, 100),
+            "angle": 0
+            }
+    
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The ax object with the polarization direction added.
     
     """
-    # if "polarization_kwargs" not in kwargs: #TODO: Clean up. Lot of kwargs that don't do anything.
-    #     polarization_kwargs= {
-    #         "type": "out",
-    #         "color": "white",
-    #         "lw": 2,
-    #         "alpha": 1,
-    #         "pos": (100, 200), # TODO: Fix xy. No, keep in image coordinates for now. 
 
-    #     }
-    # else:
-    #     polarization_kwargs = kwargs["polarization_kwargs"]
-
-
+    #TODO: Can be redone like the other functions. 
     if "type" not in polarization_kwargs:
         polarization_kwargs["type"] = "out"
     if "color" not in polarization_kwargs:
@@ -70,7 +108,7 @@ def add_polarization_direction(ax, **polarization_kwargs):
     if "alpha" not in polarization_kwargs:
         polarization_kwargs["alpha"] = 1
     if "pos" not in polarization_kwargs:
-        polarization_kwargs["pos"] = (100, 100)
+        polarization_kwargs["pos"] = (100, 100) #TODO: Reconsider to choose between pos and position.
     if "angle" not in polarization_kwargs:
         polarization_kwargs["angle"] = 0
 
@@ -85,7 +123,7 @@ def add_polarization_direction(ax, **polarization_kwargs):
         #     "width": 0.05,
         # } # TODO: Fix with kwargs
 
-        width = img_dim[1]*0.05 #arrow_kwargs["width"]
+        width = img_dim[1]*0.05 # TODO: Adjustable sizes possibly?
         dx = img_dim[1]*0.05 * np.cos(np.deg2rad(arrow_kwargs["angle"]))
         dy = img_dim[0]*0.05 * np.sin(np.deg2rad(arrow_kwargs["angle"]))
         arrow = mpatches.Arrow(pos_tip[1]-dx, pos_tip[0]-dy, dx, dy,width = width, color=arrow_kwargs["color"], alpha=arrow_kwargs["alpha"], lw=arrow_kwargs["lw"])
@@ -95,6 +133,9 @@ def add_polarization_direction(ax, **polarization_kwargs):
         return
     
     def pol_in(ax, pos_tip, img_dim, **kwargs):
+        '''
+        Adds a circle with a cross indicating the polarization direction inwards.
+        '''
 
         r= 0.05*img_dim[1]
         
@@ -115,6 +156,9 @@ def add_polarization_direction(ax, **polarization_kwargs):
         return
     
     def pol_out(ax, pos_tip, img_dim, **kwargs):
+        '''
+        Adds a circle with a dot indicating the polarization direction outwards.
+        '''
 
         r = 0.05*img_dim[1]
 
@@ -140,6 +184,36 @@ def add_polarization_direction(ax, **polarization_kwargs):
 
 
 def add_alphabetic_label(ax, letter, **kwargs):
+    """
+    Adds an alphabetic label to the plot at the specified position.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The ax object to add the alphabetic label to.
+    letter : str
+        The letter to add to the plot.
+    kwargs : dict, optional
+        The keyword arguments for the alphabetic label. The default is:
+            {
+            "color": "white",
+            "location": 1,
+            "frameon": True,
+            "box_color" :"black",
+            "box_alpha" : 0.5,
+            "formatter":0,
+            "pad": 0,
+            "location": "upper left",
+            "horizontalalignment": "left",
+            "verticalalignment": "top",
+            "position": (0,1)
+            }
+    
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The ax object with the alphabetic label added.
+    """
 
     formatter ={
         0: lambda letter,:   f"{letter}",
@@ -160,6 +234,9 @@ def add_alphabetic_label(ax, letter, **kwargs):
             "formatter":0,
             "pad": 0,
             "location": "upper left",
+            "horizontalalignment": "left",
+            "verticalalignment": "top",
+            "position": (0,1)
         }
         
 
@@ -177,75 +254,50 @@ def add_alphabetic_label(ax, letter, **kwargs):
         for key, value in new_kwargs.items():
             if key in alpha_kwargs:
                 alpha_kwargs[key] = value
-    from matplotlib.offsetbox import AnchoredText
 
-    # text = AnchoredText(formatter[alpha_kwargs["formatter"]](letter), color=alpha_kwargs["color"], loc=alpha_kwargs["location"], frameon=alpha_kwargs["frameon"], bbox_to_anchor=(0.0, 1.0), bbox_transform=ax.transAxes, pad=alpha_kwargs["pad"], prop=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"]))
-    text = ax.text(0,1, formatter[alpha_kwargs["formatter"]](letter), horizontalalignment="left", verticalalignment="top", color=alpha_kwargs["color"], transform=ax.transAxes, bbox=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"], edgecolor="none", pad=alpha_kwargs["pad"]))
+    text = ax.text(alpha_kwargs["position"][0],alpha_kwargs["position"][1], formatter[alpha_kwargs["formatter"]](letter), horizontalalignment=alpha_kwargs["horizontalalignment"], verticalalignment=alpha_kwargs["verticalalignment"], color=alpha_kwargs["color"], transform=ax.transAxes, bbox=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"], edgecolor="none", pad=alpha_kwargs["pad"]))
     bbox = text.get_window_extent().transformed(ax.transAxes.inverted())
     # print(bbox.x0, bbox.y0, bbox.x1, bbox.y1)
     # fs = text.get_fontsize()
     # print(fs)
     # ax.add_artist(text)
-    width = bbox.width
-    height = bbox.height
+    # width = bbox.width
+    # height = bbox.height
 
-    print(width, height)
+    # print(width, height)
 
-    extents = text.get_bbox_patch().get_extents()
-    x0 = extents.x0
-    y0 = extents.y0
-    x1 = extents.x1
-    y1 = extents.y1
+    # extents = text.get_bbox_patch().get_extents()
+    # x0 = extents.x0
+    # y0 = extents.y0
+    # x1 = extents.x1
+    # y1 = extents.y1
 
-    print(x0, y0, x1, y1)
+    # print(x0, y0, x1, y1)
 
     # text.set_position((width*abs(x0)*abs(x1-x0),  (1-width*abs(y0)*(y1-y0) )))
     
     return ax
 
 
-
-# #TODO: Redo and improve.
-# def add_anchored_scalebar(ax, res, **kwargs):
-#     if "alpha_kwargs" not in kwargs:
-#         size = int(1000 * res*1e6)
-
-#         scale_kwargs = {
-#             "size": size,
-#             "label": f"{int(size)} um", #TODO: Fix the label.
-#             "color": "white",
-#             "alpha": 0.5,
-#             "loc": 4,
-#             "frameon": False,
-#             "size_vertical": 8,
-#             "label_top": True,
-#             # "barcolor": "white",
-#             # "font_properties": {"size": 12}
-#         }
-#     else:
-#         scale_kwargs = kwargs["scalebar_kwargs"]
-
-#     scalebar0 = AnchoredSizeBar(ax.transData, **scale_kwargs)
-#     scalebar0.txt_label._text.set_path_effects(
-#         [PathEffects.withStroke(linewidth=2, foreground="black", capstyle="round")]
-#     )
-#     ax.add_artist(scalebar0)
-#     return ax
-
-
 #TODO: Redo and improve.
-def add_cmap(ax, **kwargs):
-    if "cmap_kwargs" not in kwargs:
-        cmap_kwargs = {
-            "cmap": "inferno",
-            "vmin": 0,
-            "vmax": 1,
-            "orientation": "vertical",
-            "fraction": 0.046,
-            "pad": 0.04,
-        }
-    else:
-        cmap_kwargs = kwargs["cmap_kwargs"]
+def add_colorbar(ax, mappable, **kwargs):
+    colorbar_kwargs = {
+        "cmap": "inferno",
+        # "vmin": 0,
+        # "vmax": 1,
+        "label": None,
+        "orientation": "vertical",
+        "fraction": 0.046,
+        "pad": 0.04,
+    }
 
-    cbar = plt.colorbar(**cmap_kwargs)
+    if "colorbar_kwargs" not in kwargs:
+
+        for key, value in kwargs.items():
+            if key in colorbar_kwargs:
+                colorbar_kwargs[key] = value
+    else:
+        colorbar_kwargs = kwargs["colorbar_kwargs"]
+
+    cbar = plt.colorbar(**colorbar_kwargs, ax=ax, mappable=mappable)
     return ax, cbar
