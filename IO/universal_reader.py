@@ -72,7 +72,7 @@ class GwyFile:
             "Height": ["Height"],
             "Current": ["Current", "Iprobe"],
             "Deflection": ["DFL", "Deflection"],
-            "ZSensor": ["ZSensor"],
+            "ZSensor": ["ZSensor", "Z-Axis"],
             "Voltage": ["Voltage", "Ext1"], #TODO: Know how to sort these. Include Channels etc. Remember to update both or remove gwyfile from classes. This one is the updated one. 
             "VPFM": ["VPFM", "Ext2"],
             "LPFM": ["LPFM", "Ext3"],
@@ -80,8 +80,8 @@ class GwyFile:
             "Phase": ["Phase"],
         }
     modes = {
-            "Forward": ["F:", "Trace", "Forward"],
-            "Backward": ["B:", "Retrace", "Backward" ]
+            "Forward": ["F:", "Trace", "Forward", "forward"],
+            "Backward": ["B:", "Retrace", "Backward", "backward" ]
         }
 
     settings = {

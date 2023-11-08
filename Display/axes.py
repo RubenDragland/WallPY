@@ -113,7 +113,7 @@ class Ax:
         self.ax.axis("off")
         self.fig.colorbar(im, ax=self.ax, label="Current (pA)") #TODO: Fix the label. Or this is a bit hard-coded. See if more general is possible eventually.
         self.set_labels()
-        attr.add_scalebar(self.ax, datafile.x_res)
+        # attr.add_scalebar(self.ax, datafile.x_res) #TODO: Fix this.
         return
     
 
@@ -152,7 +152,7 @@ class Ax:
         im = self.ax.imshow(values, vmax=vmax, origin="lower")      
         self.ax.axis("off")
         self.fig.colorbar(im, ax=self.ax, label=inset_kwargs["label"]) #TODO: Fix the label in kwargs or something.
-        attr.add_scalebar(self.ax, datafile.x_res)
+        # attr.add_scalebar(self.ax, datafile.x_res) #TODO: Fix this.
 
 
         axins = self.ax.inset_axes([inset_kwargs["left_x"], inset_kwargs["left_y"], inset_kwargs["width"], inset_kwargs["height"]])
