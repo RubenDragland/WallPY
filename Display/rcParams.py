@@ -11,28 +11,49 @@ from cycler import cycler
 
 
 # TODO: Change and adapt
+try:
+    plt.style.use(["tableau-colorblind10", "seaborn-paper"])
+except:
+    try:
+        plt.style.use(["tableau-colorblind10", "seaborn-v0_8-paper"])
+    except:
+        "No style found."
 
-plt.style.use(["tableau-colorblind10", "seaborn-paper"])
+    
+# mpl.rcParams["axes.prop_cycle"] = cycler(
+#     color=[
+#         "#3D65A5",
+#         "#E57A77",
+#         "#7CA1CC",
+#         "#F05039",
+#         "#1F449C",
+#         "#A8B6CC",
+#         "#EEBAB4",
+#         "#E57A77",
+#         "#7CA1CC",
+#         "#F05039",
+#         "#1F449C",
+#         "#A8B6CC",
+#         "#EEBAB4",
+#         "#3D65A5",
+#     ]  # ["#F05039", "#E57A77", "#EEBAB4", "#1F449C", "#3D65A5", "#7CA1CC", "#A8B6CC"]
+# ) + cycler(
+#     linestyle=["-", "--", "-.", ":", "-", "--", "-."] * 2)
+
+magma_colors = plt.cm.magma(np.linspace(0.15, 0.80, 4))
+magma_colors = magma_colors[[0, -1, 2, 1]]
+
+inferno_colors = plt.cm.inferno(np.linspace(0.15, 0.80, 4))
+inferno_colors = inferno_colors[[-1, 1, 2, 0]]
+
+colors = np.vstack((magma_colors, inferno_colors))
+
+
 mpl.rcParams["axes.prop_cycle"] = cycler(
-    color=[
-        "#3D65A5",
-        "#E57A77",
-        "#7CA1CC",
-        "#F05039",
-        "#1F449C",
-        "#A8B6CC",
-        "#EEBAB4",
-        "#E57A77",
-        "#7CA1CC",
-        "#F05039",
-        "#1F449C",
-        "#A8B6CC",
-        "#EEBAB4",
-        "#3D65A5",
-    ]  # ["#F05039", "#E57A77", "#EEBAB4", "#1F449C", "#3D65A5", "#7CA1CC", "#A8B6CC"]
-) + cycler(
-    linestyle=["-", "--", "-.", ":", "-", "--", "-."] * 2)
+    color= colors) + cycler(
+    linestyle=["-", "--", "-.", ":", "-", "--", "-.", ":"] )
 
+#TODO: Make a function that sets appropiate rcParams for the figure given figsize. 
 DEFAULT_FIGSIZE = (5.69/2, 3.9/2) # TODO: Change and adapt
 w = 1
 mpl.rcParams["axes.linewidth"] = w
@@ -84,6 +105,18 @@ def choose_formatter(incscape=True):
             }
         )
     return
+
+#TODO: For matplotlib axes size adjustments: see from mpl_toolkits.axes_grid1 import Divider, Size
+def set_axis_size(w,h, ax=None):
+    """ w, h: width, height in inches """
+    if not ax: ax=plt.gca()
+    l = ax.figure.subplotpars.left
+    r = ax.figure.subplotpars.right
+    t = ax.figure.subplotpars.top
+    b = ax.figure.subplotpars.bottom
+    figw = float(w)/(r-l)
+    figh = float(h)/(t-b)
+    ax.figure.set_size_inches(figw, figh)
 
 
 def hex_to_rgb(value):

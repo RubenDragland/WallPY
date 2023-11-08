@@ -7,6 +7,21 @@ import os
 import time
 import attributes as attr
 
+
+import math
+
+
+def plot_overview(gwyfile, size=10):
+    cal_size = len(gwyfile.channel_names)
+    cal_grid = math.ceil(math.sqrt(cal_size))
+    fig, axs = plt.subplots(cal_grid, cal_grid, figsize=(size, size))
+    for i, (name,ax) in enumerate(zip(gwyfile.channel_names, axs.flatten())):
+        map = "gray" if "Height" in name else "magma"
+        ax.imshow(gwyfile[i], cmap=map)
+        ax.set_title(name)
+    plt.show()
+    return
+
 class FigureSinglePlot:
 
     """
@@ -43,6 +58,7 @@ class FigureSinglePlot:
         "extension": ".pdf",
         "figsize": (DEFAULT_FIGSIZE[0], DEFAULT_FIGSIZE[1]),
         "dpi": 300,
+        "transparent": False,
     } #TODO: Find the necessary kwargs
 
     def __init__(self, datafile, **kwargs): #TODO: DO not use datafile. 
@@ -60,7 +76,7 @@ class FigureSinglePlot:
 
     def __call__(self):
 
-        self.fig.savefig(os.path.join(self.kwargs["path"],self.kwargs["filename"]+self.kwargs["extension"]) ,dpi=self.kwargs["dpi"]) 
+        self.fig.savefig(os.path.join(self.kwargs["path"],self.kwargs["filename"]+self.kwargs["extension"]) ,dpi=self.kwargs["dpi"], transparent=self.kwargs["transparent"]) 
 
         if self.kwargs["show"]: #TODO: Create defaults
             plt.show()
@@ -133,7 +149,7 @@ class FigureSubplots(FigureSinglePlot):
         return
     
     def create_figure(self):
-
+        # TODO: Option to set arb. figsize
         if self.kwargs["standard_size"]:
             self.fig = plt.figure(figsize=(self.kwargs["figsize"][0]*self.kwargs["ncols"], self.kwargs["figsize"][1]*self.kwargs["nrows"]))
             self.gs = self.fig.add_gridspec(self.kwargs["nrows"], self.kwargs["ncols"])
@@ -152,6 +168,7 @@ class FigureSubplots(FigureSinglePlot):
             "sharex": None,
             "sharey": None,
             "letter": "a",
+            "projection": None,
         }
 
         for key, value in subplot_kwargs.items():
@@ -160,16 +177,16 @@ class FigureSubplots(FigureSinglePlot):
 
 
         if row_span is None and col_span is None:
-            ax = self.fig.add_subplot(self.gs[row,col], )# sharex=kwargs["sharex"], sharey=kwargs["sharey"]) #TODO: Fix share. and Share colorbar etc. 
+            ax = self.fig.add_subplot(self.gs[row,col], projection=kwargs["projection"] )# sharex=kwargs["sharex"], sharey=kwargs["sharey"]) #TODO: Fix share. and Share colorbar etc. 
             self.Axes.append(Ax(self.fig, ax=ax, **kwargs))
         elif row_span is None:
-            ax = self.fig.add_subplot(self.gs[row,slice(col, col_span)],)# sharex=kwargs["sharex"], sharey=kwargs["sharey"])
+            ax = self.fig.add_subplot(self.gs[row,slice(col, col_span)], projection=kwargs["projection"])# sharex=kwargs["sharex"], sharey=kwargs["sharey"])
             self.Axes.append(Ax(self.fig, ax=ax, **kwargs))
         elif col_span is None:
-            ax = self.fig.add_subplot(self.gs[slice(row, row_span),col], ) # sharex=kwargs["sharex"], sharey=kwargs["sharey"])
+            ax = self.fig.add_subplot(self.gs[slice(row, row_span),col], projection=kwargs["projection"]) # sharex=kwargs["sharex"], sharey=kwargs["sharey"])
             self.Axes.append(Ax(self.fig, ax=ax, **kwargs))
         else:
-            ax = self.fig.add_subplot(self.gs[slice(row,row_span), slice(col, col_span) ],)# sharex=kwargs["sharex"], sharey=kwargs["sharey"])
+            ax = self.fig.add_subplot(self.gs[slice(row,row_span), slice(col, col_span) ], projection=kwargs["projection"])# sharex=kwargs["sharex"], sharey=kwargs["sharey"])
             self.Axes.append(Ax(self.fig, ax=ax, **kwargs))
 
         return self.Axes[-1]
