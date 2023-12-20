@@ -24,16 +24,18 @@ def add_scalebar(ax, res, **kwargs):
     kwargs : dict, optional
         The keyword arguments for the scalebar. The default is:
             {
+            "fixed_value": None,
             "units": f"um",
             "color": "white",
             "location": 4,
             "frameon": True,
             "box_color" :"black",
-            "box_alpha" : 0.25,
+            "box_alpha" : 0.45,
             "scale_loc": "bottom",
-            "length_fraction":0.5,
+            "length_fraction":0.35,
             "width_fraction": 0.01,
-            "scale_formatter":scale_formatter
+            "scale_formatter":None, depends on units: (lambda value, unit:   f"{value} "  +r"$\\upmu$m"),
+            "font_properties": {"size": 12}, TODO: But adjust when finding correct scaling
             }
     
     Returns
@@ -42,22 +44,19 @@ def add_scalebar(ax, res, **kwargs):
         The ax object with the scalebar added.
     """
 
-    scale_formatter = lambda value, unit:   f"{value} "  +r"$\\upmu$m"
+    mu_formatter = lambda value, unit:   f"{value} "  +r"$\\upmu$m"
     scale_kwargs ={
-            # "dx": size,
             "fixed_value": None,
-            "units": f"um", #TODO: Fix the label.
+            "units": f"um",
             "color": "white",
             "location": 4,
             "frameon": True,
             "box_color" :"black",
             "box_alpha" : 0.45,
-            # "size_vertical": 8,
             "scale_loc": "bottom",
             "length_fraction":0.35,
             "width_fraction": 0.01,
             "scale_formatter":None,
-            # "label_top": True,
             "font_properties": {"size": 12},
 
         }
@@ -67,23 +66,25 @@ def add_scalebar(ax, res, **kwargs):
         for key, value in kwargs.items():
             if key in scale_kwargs:
                 scale_kwargs[key] = value
+   
+    else:
 
-    
-    else: #TODO: Finish and prob do not use scalebar package. Use instead normal artist. 
-
-        new_kwargs = kwargs["alpha_kwargs"]
-
+        new_kwargs = kwargs["scalebar_kwargs"]
         for key, value in new_kwargs.items():
             if key in scale_kwargs:
                 scale_kwargs[key] = value
 
     size = res*1e6
+    if size * scale_kwargs["length_fraction"] * ax.get_images()[0].get_array().shape[1] > 1:
+        scale_kwargs["scale_formatter"] = mu_formatter
+
+
     bar = ScaleBar(dx = size, **scale_kwargs)
     ax.add_artist(bar)
     return ax
 
 
-def add_polarization_direction(ax, **polarization_kwargs):
+def add_polarization_direction(ax, **kwargs):
     """
     Adds a polarization direction to the plot at the specified position.
     The function makes sure the arrow is a sufficient size based on the size of the plot; i.e. hardcoded sizes for now.
@@ -110,48 +111,56 @@ def add_polarization_direction(ax, **polarization_kwargs):
     
     """
 
-    #TODO: Can be redone like the other functions. 
-    if "type" not in polarization_kwargs:
-        polarization_kwargs["type"] = "out"
-    if "color" not in polarization_kwargs:
-        polarization_kwargs["color"] = "white"
-    if "lw" not in polarization_kwargs:
-        polarization_kwargs["lw"] = 1
-    if "alpha" not in polarization_kwargs:
-        polarization_kwargs["alpha"] = 1
-    if "pos" not in polarization_kwargs:
-        polarization_kwargs["pos"] = (100, 100) #TODO: Reconsider to choose between pos and position.
-    if "angle" not in polarization_kwargs:
-        polarization_kwargs["angle"] = 0
+    polarization_kwargs={
+            "type": "out",
+            "color": "white",
+            "lw": 1,
+            "alpha": 1,
+            "pos": (100, 100),
+            "angle": 0,
+            "ratio_size": 0.05, 
+    }
 
-    
-    def arrow_right(ax, pos_tip, img_dim, **arrow_kwargs):
 
-        # arrow_kwargs = {
-        #     "color": "white",
-        #     "lw": 1,
-        #     "alpha": 1,
-        #     "angle": 90,
-        #     "width": 0.05,
-        # } # TODO: Fix with kwargs
+    if "polarization_kwargs" not in kwargs:
 
-        width = img_dim[1]*0.05 # TODO: Adjustable sizes possibly?
-        dx = img_dim[1]*0.05 * np.cos(np.deg2rad(arrow_kwargs["angle"]))
-        dy = img_dim[0]*0.05 * np.sin(np.deg2rad(arrow_kwargs["angle"]))
+        for key, value in kwargs.items():
+            if key in polarization_kwargs:
+                polarization_kwargs[key] = value
+   
+    else:
+
+        new_kwargs = kwargs["polarization_kwargs"]
+        for key, value in new_kwargs.items():
+            if key in polarization_kwargs:
+                polarization_kwargs[key] = value
+
+    polarization_kwargs["size"] = polarization_kwargs["ratio_size"]*ax.get_images()[0].get_array().shape[1] #TODO: Possibly update when automating size of things based on figure size.
+
+    def arrow_right(ax, pos_tip, **arrow_kwargs):
+        '''
+        Adds an arrow pointing to the right.
+        Choose angle to point in another direction.
+        '''
+
+        r= arrow_kwargs["size"]
+        width = r # TODO: Adjustable sizes possibly?
+        dx = r* np.cos(np.deg2rad(arrow_kwargs["angle"]))
+        dy = r * np.sin(np.deg2rad(arrow_kwargs["angle"]))
         arrow = mpatches.Arrow(pos_tip[1]-dx, pos_tip[0]-dy, dx, dy,width = width, color=arrow_kwargs["color"], alpha=arrow_kwargs["alpha"], lw=arrow_kwargs["lw"])
 
         ax.add_patch(arrow)
 
         return
     
-    def pol_in(ax, pos_tip, img_dim, **kwargs):
+    def pol_in(ax, pos_tip, **in_kwargs):
         '''
         Adds a circle with a cross indicating the polarization direction inwards.
         '''
 
-        r= 0.05*img_dim[1]
+        r= in_kwargs["size"]
         
-        circle = mpatches.Circle(pos_tip, radius=r, edgecolor=kwargs["color"], alpha=kwargs["alpha"], lw=kwargs["lw"], facecolor="none") #TODO: Fix kwargs.
+        circle = mpatches.Circle(pos_tip, radius=r, edgecolor=in_kwargs["color"], alpha=in_kwargs["alpha"], lw=in_kwargs["lw"], facecolor="none") #TODO: Fix kwargs.
         ax.add_patch(circle)
 
         cross_path_data = [
@@ -161,23 +170,22 @@ def add_polarization_direction(ax, **polarization_kwargs):
 
         cross_path = Path(cross_path_data, [Path.MOVETO, Path.LINETO, Path.MOVETO, Path.LINETO])
 
-        cross = PathPatch(cross_path, color= kwargs["color"], alpha=kwargs["alpha"], lw=kwargs["lw"])
-
+        cross = PathPatch(cross_path, color= in_kwargs["color"], alpha=in_kwargs["alpha"], lw=in_kwargs["lw"])
         ax.add_patch(cross)
 
         return
     
-    def pol_out(ax, pos_tip, img_dim, **kwargs):
+    def pol_out(ax, pos_tip, **out_kwargs):
         '''
         Adds a circle with a dot indicating the polarization direction outwards.
         '''
 
-        r = 0.05*img_dim[1]
+        r = out_kwargs["size"]
 
-        circle = mpatches.Circle(pos_tip, radius=r, edgecolor="white", alpha=1, lw=1, facecolor="none") #TODO: Fix kwargs.
+        circle = mpatches.Circle(pos_tip, radius=r, edgecolor=out_kwargs["color"], alpha=out_kwargs["alpha"], lw=out_kwargs["lw"], facecolor="none") #TODO: Fix kwargs.
         ax.add_patch(circle)
 
-        dot = mpatches.Circle(pos_tip, radius=r/5, edgecolor="white", alpha=1, lw=1, facecolor="white") #TODO: Fix kwargs.
+        dot = mpatches.Circle(pos_tip, radius=r/5, edgecolor=out_kwargs["color"], alpha=out_kwargs["alpha"], lw=out_kwargs["lw"], facecolor=out_kwargs["color"]) #TODO: Fix kwargs.
 
         ax.add_patch(dot)
 
@@ -260,7 +268,7 @@ def add_alphabetic_label(ax, letter, **kwargs):
                 alpha_kwargs[key] = value
 
     
-    else: #TODO: Finish and prob do not use scalebar package. Use instead normal artist. 
+    else:
 
         new_kwargs = kwargs["alpha_kwargs"]
 
@@ -270,34 +278,16 @@ def add_alphabetic_label(ax, letter, **kwargs):
 
     text = ax.text(alpha_kwargs["position"][0],alpha_kwargs["position"][1], formatter[alpha_kwargs["formatter"]](letter), horizontalalignment=alpha_kwargs["horizontalalignment"], verticalalignment=alpha_kwargs["verticalalignment"], size= alpha_kwargs["size"], color=alpha_kwargs["color"], transform=ax.transAxes, bbox=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"], edgecolor="none", pad=alpha_kwargs["pad"]))
     bbox = text.get_window_extent().transformed(ax.transAxes.inverted())
-    # print(bbox.x0, bbox.y0, bbox.x1, bbox.y1)
-    # fs = text.get_fontsize()
-    # print(fs)
-    # ax.add_artist(text)
-    # width = bbox.width
-    # height = bbox.height
 
-    # print(width, height)
-
-    # extents = text.get_bbox_patch().get_extents()
-    # x0 = extents.x0
-    # y0 = extents.y0
-    # x1 = extents.x1
-    # y1 = extents.y1
-
-    # print(x0, y0, x1, y1)
-
-    # text.set_position((width*abs(x0)*abs(x1-x0),  (1-width*abs(y0)*(y1-y0) )))
+    #TODO: Do not dare to touch this too much. 
     
     return ax
 
 
-#TODO: Redo and improve.
+#TODO: Believe it works nicely? Improve some things?
 def add_colorbar(ax, mappable, **kwargs):
     colorbar_kwargs = {
-        "cmap": "magma",
-        # "vmin": 0,
-        # "vmax": 1,
+        # "cmap": "magma", Not needed or chosen here at all. 
         "label": None,
         "orientation": "vertical",
         "fraction": 0.046,

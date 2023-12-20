@@ -74,7 +74,7 @@ class GwyFile:
             "Current": ["Current", "Iprobe"],
             "Deflection": ["DFL", "Deflection"],
             "ZSensor": ["ZSensor", "Z-Axis"],
-            "Voltage": ["Voltage", "Ext1"], #TODO: Know how to sort these. Include Channels etc. Remember to update both or remove gwyfile from classes. This one is the updated one. 
+            "Voltage": ["Voltage", "Ext1"], #TODO: Know how to sort these. Include Channels etc. Remember to update both or remove gwyfile from classes. This one is the updated one. Ext1 and Iprobe have weird current amplifiers, which make phase not retrievable.
             "VPFM": ["VPFM", "Ext2"],
             "LPFM": ["LPFM", "Ext3"],
             "Amplitude": ["Amp", "Amplitude", "Mag"],
@@ -95,12 +95,25 @@ class GwyFile:
         """
         path: path to folder
         filename: filename of scan
+
+        kwargs = {
+            "opath": None,
+        }
         """
+        self.kwargs = {
+            "opath": None,
+
+        }
+
+        for key, value in kwargs.items():
+            if key in self.kwargs:
+                self.kwargs[key] = value
+
+
         self.path = path
         self.filename = filename[:-4] if filename.endswith(".gwy") else filename
         self.fullpath = os.path.join(self.path, self.filename +".gwy") 
-        self.opath = os.path.join(self.path, self.filename  + ".hdf5")
-        self.kwargs = kwargs
+        self.opath = os.path.join(self.path, self.filename  + ".hdf5") if self.kwargs["opath"] is None else os.path.join(self.kwargs["opath"], self.filename  + ".hdf5")
 
         try:
 
@@ -116,8 +129,7 @@ class GwyFile:
     
     def __call__(self):
         """
-        Currently no functionality. Keep it as gwy-dict. Perhaps store transformed data in hdf5 file or something?
-        Idea: Redefine keys based on metadata, and store the data in a hdf5 file.
+        Transforms the gwy-file to a hdf5-file that can be processed and more easily read.
         """
 
         obj = gwy.load(self.fullpath)
@@ -132,7 +144,7 @@ class GwyFile:
 
                 category = str(find_key(GwyFile.keywords, key))
                 mode = str(find_key(GwyFile.modes, key))
-                unique = str(id) #str(np.round(np.max(1e6*channels[key].data)-np.min(1e6*channels[key].data),3)) 
+                unique = str(id) 
 
                 name = f"{category}_{mode}_{unique}"
                 self.channel_names.append(name)
@@ -154,15 +166,16 @@ class GwyFile:
     def get_by_key(self, key: str) -> list:
 
         """
-        Returns the data of a channel based on category and mode. Returns a list if multiple channels are found.
-        TODO: Adjust so that B and F are valid modes.
-        TODO: Can both modes work?
+        Returns the data of a channel based on category and mode. 
+        Returns a list if multiple channels are found.
+        Must currently specify both category/keyword and mode.
         """
         datas = []
 
+        assert self.channel_names != [], "No channels found. Run __call__ first."
+
         with h5py.File(self.opath, "r") as f:
 
-            # self.channel_names = list(f["channel_names"])
             for channel in self.channel_names:
 
                 keyword = find_key(GwyFile.keywords, key)
@@ -201,6 +214,7 @@ class GwyFile:
         """
         Returns the metadata of a channel based on index.
         """
+        assert self.channel_names != [], "No channels found. Run __call__ first."
         name = self.channel_names[index]
         if feature is None:
             with h5py.File(self.opath, "r") as f:
