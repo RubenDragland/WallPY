@@ -10,9 +10,10 @@ import re
 from universal_reader import find_key, GwyFile
 import ibw_io
 from ibw_io import CypherFile
+from sem import Tif2Hspy, Tif2H5, BatchTif2H5
 
 
-import hyperspy.api as hs
+# import hyperspy.api as hs
 # import hystorian as hy
 
 

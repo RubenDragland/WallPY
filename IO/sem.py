@@ -194,11 +194,6 @@ class BatchTif2H5(Tif2H5):
             f.create_dataset("channel_names", data=np.array(self.channel_names, dtype="S") )
         return
 
-    # def __getitem__(self, index: int=0) -> np.ndarray:
-
-    #     with h5py.File(self.opath, "r") as f:
-    #             return np.array(f[str(index).zfill(2)]["data"])
-
     def get_meta(self, index: int = 0) -> dict:
         """
         Returns the metadata of the hdf5 file.
