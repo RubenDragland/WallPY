@@ -59,6 +59,7 @@ class FigureSinglePlot:
         "figsize": (DEFAULT_FIGSIZE[0], DEFAULT_FIGSIZE[1]),
         "dpi": 300,
         "transparent": False,
+        "standard_scale": True, #Meaning scaling rcParams to the figure size.
     } #TODO: Find the necessary kwargs
 
     def __init__(self, datafile, **kwargs): #TODO: DO not use datafile. 
@@ -86,6 +87,9 @@ class FigureSinglePlot:
     def create_figure(self): #-> tuple(plt.figure, Ax):
 
         self.fig = plt.figure(figsize=(self.kwargs["figsize"]))
+
+        if self.kwargs["standard_scale"]:
+            adapt_mpl_fig(self.fig) #TODO: Introduced to get normal scale between figsize and rcParams.
 
         self.Ax = Ax(self.fig, **self.kwargs)
 
@@ -156,6 +160,9 @@ class FigureSubplots(FigureSinglePlot):
         else:
             self.fig = plt.figure(figsize=(self.kwargs["figsize"]))
             self.gs = self.fig.add_gridspec(self.kwargs["nrows"], self.kwargs["ncols"])
+
+        if self.kwargs["standard_scale"]:
+            adapt_mpl_fig(self.fig) #TODO: Introduced to get normal scale between figsize and rcParams.
 
         return
     

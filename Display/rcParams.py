@@ -54,7 +54,9 @@ mpl.rcParams["axes.prop_cycle"] = cycler(
     linestyle=["-", "--", "-.", ":", "-", "--", "-.", ":"] )
 
 #TODO: Make a function that sets appropiate rcParams for the figure given figsize. 
+#TODO: Implement functionality first; find optimal settings later. 
 DEFAULT_FIGSIZE = (5.69/2, 3.9/2) # TODO: Change and adapt
+TOMMER = np.sqrt( DEFAULT_FIGSIZE[0]**2 + DEFAULT_FIGSIZE[1]**2)
 w = 1
 mpl.rcParams["axes.linewidth"] = w
 mpl.rcParams["xtick.major.width"] = w
@@ -64,16 +66,61 @@ mpl.rcParams["ytick.minor.width"] = w / 2
 
 mpl.rcParams["lines.markersize"] = 6 * w
 mpl.rcParams["lines.linewidth"] = 2 * w
-mpl.rcParams["font.size"] = 12
-mpl.rcParams["legend.fontsize"] = 14
-mpl.rcParams["figure.titlesize"] = 20
-mpl.rcParams["axes.titlesize"] = 16
-mpl.rcParams["xtick.labelsize"] = 12
-mpl.rcParams["ytick.labelsize"] = 12
-mpl.rcParams["axes.labelsize"] = 12
+mpl.rcParams["font.size"] = 12 *w
+mpl.rcParams["legend.fontsize"] = 14 *w
+mpl.rcParams["figure.titlesize"] = 20 *w
+mpl.rcParams["axes.titlesize"] = 16 *w
+mpl.rcParams["xtick.labelsize"] = 12 * w
+mpl.rcParams["ytick.labelsize"] = 12 * w
+mpl.rcParams["axes.labelsize"] = 12 * w
 mpl.rcParams["figure.figsize"] = DEFAULT_FIGSIZE  # (8, 6)
 mpl.rcParams["figure.constrained_layout.use"] = True
 plt.rcParams['image.cmap'] = 'magma'
+
+
+size_settings = {
+        "axes.linewidth": 1,
+        "xtick.major.width": 1,
+        "xtick.minor.width": 0.5,
+        "ytick.major.width": 1,
+        "ytick.minor.width": 0.5,
+        "lines.markersize": 6,
+        "lines.linewidth": 2,
+        "font.size": 12,
+        "legend.fontsize": 14,
+        "figure.titlesize": 20,
+        "axes.titlesize": 16,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "axes.labelsize": 12,
+    }
+
+
+def adapt_mpl_fig(fig):
+    '''
+    Adapt the matplotlib rcParams to the figure introduced.
+    Idea to just do this locally based in the figure?
+    '''
+    figsize = fig.get_size_inches()
+    tommer = np.sqrt(figsize[0]**2 + figsize[1]**2)
+
+    for key, value in size_settings.items():
+        mpl.rcParams[key] = value * tommer/TOMMER
+    
+    return
+
+def update_mpl_figsize(figx, figy):
+    '''
+    Update the matplotlib rcParams to the fig size introduced
+    '''
+    tommer = np.sqrt(figx**2 + figy**2)
+
+    for key, value in size_settings.items():
+        mpl.rcParams[key] = value * tommer/TOMMER
+    
+    return
+
+
 
 
 mpl.rcParams.update(
