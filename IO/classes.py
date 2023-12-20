@@ -12,6 +12,8 @@ import gwyfile as gwy
 import re
 
 from universal_reader import find_key, GwyFile
+import ibw_io
+
 
 import hyperspy.api as hs
 import hystorian as hy
@@ -264,8 +266,7 @@ class CypherFile:
         """
         Creates the hdf5 file for data analysis.
         """
-        from IO import ibw_io
-
+    
         ibw_io.convert_ibw(self)
 
         im = self["CR"]
@@ -392,16 +393,16 @@ class TifFile(CypherFile):
                 self.opath = os.path.join(self.path, self.filename + ".hdf5")
 
 
-        return img
+        return #img
     
     def __getitem__(self, key: str) -> np.ndarray:
 
         if self.hyperspy:
             h = hs.load(self.opath)
-            if key == "all":
+            if key == "all": #TODO: Fix and test.
                 return (h.data, h.metadata)
             else:
-                return h[key].data #TODO: Fix and test.
+                return h.data #TODO: Fix and test.
         else:
             with h5py.File(self.opath, "r") as f:
                 if key == "all":

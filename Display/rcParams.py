@@ -73,16 +73,17 @@ mpl.rcParams["ytick.labelsize"] = 12
 mpl.rcParams["axes.labelsize"] = 12
 mpl.rcParams["figure.figsize"] = DEFAULT_FIGSIZE  # (8, 6)
 mpl.rcParams["figure.constrained_layout.use"] = True
-plt.rcParams['image.cmap'] = 'inferno'
+plt.rcParams['image.cmap'] = 'magma'
 
 
 mpl.rcParams.update(
             {
                 "text.usetex": True,
                 "font.family": "serif",
-                "font.serif": ["Tex Gyre Pagella"],
+                "font.serif": ["Palatino Linotype"], #["Tex Gyre Pagella"],
                 "mathtext.default": "regular",
                 "mathtext.fontset": "cm",
+                'text.latex.preamble': r'\usepackage{siunitx} \usepackage{textalpha} \usepackage{upgreek}' #TODO: Might not be empty
             }
         )
 

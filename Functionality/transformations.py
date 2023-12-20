@@ -32,3 +32,9 @@ def plane_level(height: np.array):
         Z = C[0]*XX + C[1]*YY + C[2]
 
     return Z, C
+
+# Least squares: https://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html Check matte 3 or 4 for other methods.
+# Possibly do iterative fitting: https://math.stackexchange.com/questions/99299/best-fitting-plane-given-a-set-of-points
+# https://math.stackexchange.com/questions/1234240/equation-that-defines-multi-dimensional-polynomial
+
+# TODO: This one: https://stackoverflow.com/questions/33964913/equivalent-of-polyfit-for-a-2d-polynomial-in-python 

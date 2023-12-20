@@ -11,6 +11,7 @@ import gwyfile as gwy
 import re
 
 
+
 """
 GwyFile from classes.py was copied over so that the class could be imported in environments without all the different dependencies.
 TODO: Do the same for CypherFile, and use classes to do relative imports of the different classes in case one wants to import all of them. 
@@ -96,9 +97,9 @@ class GwyFile:
         filename: filename of scan
         """
         self.path = path
-        self.filename = filename
-        self.fullpath = os.path.join(path, filename+".gwy")
-        self.opath = os.path.join(self.path, self.filename + ".hdf5")
+        self.filename = filename[:-4] if filename.endswith(".gwy") else filename
+        self.fullpath = os.path.join(self.path, self.filename +".gwy") 
+        self.opath = os.path.join(self.path, self.filename  + ".hdf5")
         self.kwargs = kwargs
 
         try:
@@ -131,7 +132,7 @@ class GwyFile:
 
                 category = str(find_key(GwyFile.keywords, key))
                 mode = str(find_key(GwyFile.modes, key))
-                unique = id #str(np.round(np.max(1e6*channels[key].data)-np.min(1e6*channels[key].data),3)) 
+                unique = str(id) #str(np.round(np.max(1e6*channels[key].data)-np.min(1e6*channels[key].data),3)) 
 
                 name = f"{category}_{mode}_{unique}"
                 self.channel_names.append(name)
@@ -147,7 +148,7 @@ class GwyFile:
                 f[name].attrs["ysize"] = channels[key].yreal
                 f[name].attrs["xres"] = channels[key].xreal / channels[key].data.shape[1]
 
-            f.create_dataset("channel_names", data=self.channel_names)
+            f.create_dataset("channel_names", data=np.array(self.channel_names, dtype="S") )
         return
     
     def get_by_key(self, key: str) -> list:
@@ -207,3 +208,5 @@ class GwyFile:
         else:
             with h5py.File(self.opath, "r") as f:
                 return f[name].attrs[feature]
+            
+

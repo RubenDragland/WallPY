@@ -42,29 +42,41 @@ def add_scalebar(ax, res, **kwargs):
         The ax object with the scalebar added.
     """
 
-    if "scalabar_kwargs" not in kwargs:
-
-        # unit_rep = "\\mathrm{%s}"%"\\mu m" Something something r"$\mathrm{%s}$"%"$\mu$m" r"$\si{\micro\meter}$"#
-        scale_formatter = lambda value, unit:   f"{value} "  +r"$\mathrm{\mu}$m"
-        scale_kwargs ={
+    scale_formatter = lambda value, unit:   f"{value} "  +r"$\\upmu$m"
+    scale_kwargs ={
             # "dx": size,
+            "fixed_value": None,
             "units": f"um", #TODO: Fix the label.
             "color": "white",
             "location": 4,
             "frameon": True,
             "box_color" :"black",
-            "box_alpha" : 0.25,
+            "box_alpha" : 0.45,
             # "size_vertical": 8,
             "scale_loc": "bottom",
             "length_fraction":0.35,
             "width_fraction": 0.01,
-            #"scale_formatter":scale_formatter
+            "scale_formatter":None,
             # "label_top": True,
+            "font_properties": {"size": 12},
 
         }
-    else:
 
-        scale_kwargs =kwargs["scalebar_kwargs"]
+    if "scalebar_kwargs" not in kwargs:
+
+        for key, value in kwargs.items():
+            if key in scale_kwargs:
+                scale_kwargs[key] = value
+
+    
+    else: #TODO: Finish and prob do not use scalebar package. Use instead normal artist. 
+
+        new_kwargs = kwargs["alpha_kwargs"]
+
+        for key, value in new_kwargs.items():
+            if key in scale_kwargs:
+                scale_kwargs[key] = value
+
     size = res*1e6
     bar = ScaleBar(dx = size, **scale_kwargs)
     ax.add_artist(bar)
@@ -236,7 +248,8 @@ def add_alphabetic_label(ax, letter, **kwargs):
             "location": "upper left",
             "horizontalalignment": "left",
             "verticalalignment": "top",
-            "position": (0,1)
+            "position": (0,1),
+            "size": 12,
         }
         
 
@@ -255,7 +268,7 @@ def add_alphabetic_label(ax, letter, **kwargs):
             if key in alpha_kwargs:
                 alpha_kwargs[key] = value
 
-    text = ax.text(alpha_kwargs["position"][0],alpha_kwargs["position"][1], formatter[alpha_kwargs["formatter"]](letter), horizontalalignment=alpha_kwargs["horizontalalignment"], verticalalignment=alpha_kwargs["verticalalignment"], color=alpha_kwargs["color"], transform=ax.transAxes, bbox=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"], edgecolor="none", pad=alpha_kwargs["pad"]))
+    text = ax.text(alpha_kwargs["position"][0],alpha_kwargs["position"][1], formatter[alpha_kwargs["formatter"]](letter), horizontalalignment=alpha_kwargs["horizontalalignment"], verticalalignment=alpha_kwargs["verticalalignment"], size= alpha_kwargs["size"], color=alpha_kwargs["color"], transform=ax.transAxes, bbox=dict(facecolor=alpha_kwargs["box_color"], alpha=alpha_kwargs["box_alpha"], edgecolor="none", pad=alpha_kwargs["pad"]))
     bbox = text.get_window_extent().transformed(ax.transAxes.inverted())
     # print(bbox.x0, bbox.y0, bbox.x1, bbox.y1)
     # fs = text.get_fontsize()
@@ -282,7 +295,7 @@ def add_alphabetic_label(ax, letter, **kwargs):
 #TODO: Redo and improve.
 def add_colorbar(ax, mappable, **kwargs):
     colorbar_kwargs = {
-        "cmap": "inferno",
+        "cmap": "magma",
         # "vmin": 0,
         # "vmax": 1,
         "label": None,
