@@ -6,7 +6,7 @@ import attributes as attr
 
 
 
-
+##TODO: Needs a kwargs update. Often not initialied. 
 class Ax:
     """
     A class for handling an ax object in a matplotlib figure.
@@ -61,6 +61,7 @@ class Ax:
 
 
     def __init__(self, fig, **kwargs):
+        #TODO: possibly update a bit because only use fig.create_subplot to create these objects. 
 
         if "ax" in kwargs:
             self.ax = kwargs["ax"]
@@ -88,6 +89,94 @@ class Ax:
         for key, value in kwargs.items():
             self.kwargs[key] = value
         return
+    
+    def plot_standard(self, data, xres, **kwargs ):
+        """
+        Plots a standard image using imshow.
+        #TODO: Fix kwargs...
+        """
+        std_kwargs = {
+            "cmap": "magma", 
+            "vmin": None,
+            "vmax": None,
+            "raw": False,
+            "normal": False,
+            "binomial": False,
+            "quantile": 0.5,
+        }
+
+        for key, value in kwargs.items():
+            if key in std_kwargs:
+                std_kwargs[key] = value
+
+        #TODO: Do not remember the logic behind the above, but now it is possible to override. Check some day. 
+        for key, value in kwargs.items():
+            if key not in std_kwargs:
+                std_kwargs[key] = value
+        
+        #TODO: Automation of vmin and vmax. 
+        """
+        If Gaussian use HWHM in both directions, accounting for asymmetry.
+        If proper single crystal, do two curve fittings and use peaks-ish.
+        """
+
+        if not(std_kwargs["raw"]) and std_kwargs["vmin"] is None and std_kwargs["vmax"] is None:
+
+            if std_kwargs["normal"]:
+                
+                hist, edges = np.histogram(data, bins=100)
+
+                pvalue = np.max(hist)
+                peak = edges[np.argmax(hist)]
+
+                lower = edges[np.where(hist > pvalue*std_kwargs["quantile"])[0][0]]
+                upper = edges[np.where(hist > pvalue*std_kwargs["quantile"])[0][-1]]
+
+                std_kwargs["vmin"] = lower
+                std_kwargs["vmax"] = upper
+                #TODO: Something like this. 
+
+                print(lower, upper)
+
+            elif std_kwargs["binomial"]:
+
+                hist, edges = np.histogram(data, bins=100)
+
+                low_edges = edges[np.where(edges < np.mean(data))]
+                high_edges = edges[np.where(edges > np.mean(data))]
+                below_mean = hist[np.where(edges < np.mean(data))]
+                above_mean = hist[np.where(edges > np.mean(data))]
+
+                minvalue = low_edges[np.argmax(below_mean)]
+                maxvalue = high_edges[np.argmax(above_mean)]
+
+                std_kwargs["vmin"] = minvalue
+                std_kwargs["vmax"] = maxvalue
+
+                print(minvalue, maxvalue)
+
+                #Something like this. Does not fully function. 
+            else:
+                # Some bullshit but fast way
+                std_kwargs["vmin"] = np.min(data)
+                std_kwargs["vmax"] = np.max(data)
+
+        
+        im = self.ax.imshow(data, cmap=std_kwargs["cmap"], vmin=std_kwargs["vmin"], vmax=std_kwargs["vmax"], origin=self.kwargs["origin"])
+
+        if std_kwargs["colorbar"]:
+            attr.add_colorbar(self.ax, im)
+        
+        if std_kwargs["scalebar"]: #TODO: Some mishaps between ax and this plotting function. Fix. Possibly combine from all over the place
+            attr.add_scalebar(self.ax, xres)
+
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+
+
+
+        return
+
     
     def plot_cAFM(self, datafile, key:str="CR", **kwargs): #TODO: Fix imports
         """

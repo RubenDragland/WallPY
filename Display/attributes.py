@@ -75,9 +75,9 @@ def add_scalebar(ax, res, **kwargs):
                 scale_kwargs[key] = value
 
     size = res*1e6
-    if size * scale_kwargs["length_fraction"] * ax.get_images()[0].get_array().shape[1] > 1:
-        scale_kwargs["scale_formatter"] = mu_formatter
-
+    # if size * scale_kwargs["length_fraction"] * ax.get_images()[0].get_array().shape[1] > 1:
+    #     scale_kwargs["scale_formatter"] = mu_formatter
+    #TODO: Did not work with the formatter atm. Get italic for now. 
 
     bar = ScaleBar(dx = size, **scale_kwargs)
     ax.add_artist(bar)
