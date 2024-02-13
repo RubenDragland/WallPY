@@ -79,6 +79,7 @@ class GwyFile:
             "LPFM": ["LPFM", "Ext3"],
             "Amplitude": ["Amp", "Amplitude", "Mag"],
             "Phase": ["Phase"],
+            "Potential": ["Surf", "Pot"], #TODO: Check if these work. And check cypher. 
         }
     modes = {
             "Forward": ["F:", "Trace", "Forward", "forward"],
