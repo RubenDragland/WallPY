@@ -9,7 +9,19 @@ import hyperspy.api as hs
 
 def tif_init_setup(obj, kwargs: dict, extension: str):
     """
-    Shared code for tif files. 
+    Shared function for tif files. 
+    Finds full path and output path for the object in a folder.
+
+    Parameters
+    ----------
+
+    obj: object
+    kwargs: dictionary
+    extension: str
+
+    Returns
+    -------
+    None
     """
 
     for key, value in kwargs.items():
@@ -18,6 +30,8 @@ def tif_init_setup(obj, kwargs: dict, extension: str):
 
 
     possible_files = glob(os.path.join(obj.path, obj.filename+"*"))
+    possible_files = [file for file in possible_files if file.endswith(".tif") or file.endswith(".tiff") ]
+
     assert len(possible_files) == 1, "Multiple files found. Please specify."
     obj.fullpath = possible_files[0]
 
@@ -30,16 +44,41 @@ def tif_init_setup(obj, kwargs: dict, extension: str):
 class Tif2Hspy:
     """
     Class for handling SEM images using hyperspy
+
+    Attributes
+    ----------
+    path : str
+        path to folder
+    filename : str
+        filename of scan
+    kwargs : dict
+        keyword arguments for the class
+            opath : str
+                output path for the hyperspy file
+    
+    Methods
+    -------
+    __call__()
+        Loads the tif file and saves it as a hyperspy file.
+    __getitem__(key:str)
+        Returns the hyperspy object
+
     """
 
     def __init__(self, path:str, filename:str, **kwargs):
         """
-        path: path to folder
-        filename: filename of scan
+        Parameters
+        ----------
 
-        kwargs = {
-            "opath": None,
-        }
+        path: str
+            path to folder
+        filename: str
+            filename of scan
+
+        kwargs: dict
+            keyword arguments for the class
+                opath : str, optional
+                    output path for the hyperspy file. Default is None.
         """
         self.kwargs = {
             "opath": None,
@@ -54,6 +93,9 @@ class Tif2Hspy:
         return
     
     def __call__(self):
+        """
+        Loads the tif file and saves it as a hyperspy file.
+        """
 
         img = hs.load(self.fullpath)
         img.save(self.opath)
@@ -65,6 +107,20 @@ class Tif2Hspy:
         return
     
     def __getitem__(self, key: str = '') -> np.ndarray:
+        """
+        Returns the data from hyperspy, possibly with metadata.
+
+        Parameters
+        ----------
+        key : str
+            The key to return. Default is "".
+        
+        Returns
+        -------
+        np.ndarray
+            The hyperspy data possibly with metadata.
+        """
+
 
         h = hs.load(self.opath)
         if key == "all":
@@ -78,10 +134,42 @@ class Tif2Hspy:
 class Tif2H5:
     """
     Class for handling SEM images using tiffile and hdf5
+
+    Attributes
+    ----------
+    path : str
+        path to folder
+    filename : str
+        filename of scan
+    kwargs : dict
+        keyword arguments for the class
+            opath : str
+                output path for the hdf5 file
+    
+    Methods
+    -------
+    __call__(index:int)
+        Creates the hdf5 file for data analysis.
+    __getitem__(index:int)
+        Returns the data from the hdf5 file.
+
     """
 
 
     def __init__(self,path:str, filename:str, **kwargs):
+        """
+        Parameters
+        ----------
+        path : str
+            path to folder
+        filename : str
+            filename of scan
+        
+        kwargs : dict
+            keyword arguments for the class
+                opath : str, optional
+                    output path for the hdf5 file. Default is None.
+        """
 
         self.kwargs = {
             "opath": None,
@@ -97,10 +185,17 @@ class Tif2H5:
     def __call__(self, index = 0):
         """
         Creates the hdf5 file for data analysis.
+
+        Parameters
+        ----------
+        index : int, optional
+            The index of the file. Default is 0.
         """
 
         img = tifffile.imread(self.fullpath)
-        meta = tifffile.tiffFile(self.fullpath)
+        meta = tifffile.TiffFile(self.fullpath) #TODO: Currently not working. 
+
+        print(meta)
 
         self.x_dim = img.shape[1]
         self.y_dim = img.shape[0]
@@ -138,9 +233,50 @@ class Tif2H5:
 class BatchTif2H5(Tif2H5):
     """
     Gathers all tif files in a folder and saves them to a single hdf5 file.
+
+    Attributes
+    ----------
+
+    path : str
+        path to folder
+    filename : str
+        filename of scan
+    kwargs : dict
+        keyword arguments for the class
+            opath : str
+                output path for the hdf5 file
+            oname : str
+                name of the hdf5 file
+            existing : bool
+                whether the file already exists
+    
+    Methods
+    -------
+    __call__()
+        Creates the hdf5 file for data analysis.
+    get_meta(index:int)
+        Returns the metadata of the hdf5 file.
+    
     """
 
     def __init__(self, path:str, filename:str, **kwargs):
+        """
+        Parameters
+        ----------
+        path : str
+            path to folder
+        filename : str
+            filename of scan
+        
+        kwargs : dict
+            keyword arguments for the class
+                opath : str, optional
+                    output path for the hdf5 file. Default is None.
+                oname : str, optional
+                    name of the hdf5 file. Default is "SEM_batch".
+                existing : bool, optional
+                    whether the file already exists. Default is False.
+        """
 
         self.kwargs = {
             "opath": None,
@@ -174,12 +310,15 @@ class BatchTif2H5(Tif2H5):
 
 
     def __call__(self):
+        """
+        Creates the hdf5 file for data analysis.
+        """
 
         with h5py.File(self.opath, "w") as f: #TODO: Option for adding and editing files?
             self.channel_names = []
             for index, file in enumerate(self.fullpaths):
                 img = tifffile.imread(file)
-                meta = tifffile.tiffFile(file)
+                meta = tifffile.tiffFile(file) #TODO: Currently not working. 
 
                 name = str(index).zfill(2)
                 self.channel_names.append(name)
@@ -207,5 +346,5 @@ class BatchTif2H5(Tif2H5):
                 "ysize": f[name].attrs["ysize"],
                 "xres": f[name].attrs["xres"],
             }
-            return meta
+        return meta
 

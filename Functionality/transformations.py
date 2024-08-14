@@ -42,6 +42,7 @@ def plane_level(height: np.array):
 
 def plane_level_heavyside(height:np.array, xmin:int, xmax:int):
     #TODO: Make more universal. Enable ymin and ymax as well. And default max or min to 0, shape, resp. 
+    #TODO: Possibly issue with this one, still.
     """
     Employs a least squares fit to find the plane level of a height map, but retrieves the plane from a known flat region. 
 
@@ -192,4 +193,9 @@ def median_conv_scan_line_removal(data:np.array, rotation:float=0, threshold:flo
     return
 
 def fourier_fringe_removal(data:np.array, threshold:float=None, line_width:int=1):
+    return
+    
+def align_rows_median_or_poly():
+    #TODO: Implement like gwyddion aligning scan rows. 
+    #Really just an individual line adjustment algorithm.
     return
