@@ -286,8 +286,36 @@ def add_alphabetic_label(ax, letter, **kwargs):
 
 #TODO: Believe it works nicely? Improve some things?
 def add_colorbar(ax, mappable, **kwargs):
+
+    """
+    Adds a colorbar to the plot at the specified position.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The ax object to add the colorbar to.
+    mappable : matplotlib.cm.ScalarMappable
+        The mappable object to add the colorbar to.
+    kwargs : dict, optional
+        The keyword arguments for the colorbar. The default is:
+            {
+            "cmap": "magma",
+            "label": None,
+            "orientation": "vertical",
+            "fraction": 0.046,
+            "pad": 0.04,
+            }
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The ax object with the colorbar added.
+    cbar : matplotlib.colorbar.Colorbar
+        The colorbar object added to the ax object.
+    """
     colorbar_kwargs = {
         # "cmap": "magma", Not needed or chosen here at all. 
+        "cmap": None,
         "label": None,
         "orientation": "vertical",
         "fraction": 0.046,

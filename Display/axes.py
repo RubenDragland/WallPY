@@ -80,11 +80,17 @@ class Ax:
         return
     
     def set_labels(self):
+        """
+        Sets the x- and y-labels of the ax object.
+        """
         self.ax.set_xlabel(self.kwargs["xlabel"])
         self.ax.set_ylabel(self.kwargs["ylabel"])
         return
     
     def update_kwargs(self, **kwargs):
+        """
+        Updates the keyword arguments for the ax object.
+        """
 
         for key, value in kwargs.items():
             self.kwargs[key] = value
@@ -94,6 +100,27 @@ class Ax:
         """
         Plots a standard image using imshow.
         #TODO: Fix kwargs...
+
+        Parameters
+        ----------
+        data : np.array
+            The data to plot.
+        xres : float
+            The resolution of the x-axis.
+        **kwargs : dict, optional
+            The keyword arguments for the plotting. The default is:
+
+                {
+                "cmap": "magma",
+                "vmin": None,
+                "vmax": None,
+                "raw": False,
+                "normal": False,
+                "binomial": False,
+                "quantile": 0.5,
+                "colorbar": True,
+                "scalebar": True,
+                }
         """
         std_kwargs = {
             "cmap": "magma", 
@@ -103,6 +130,8 @@ class Ax:
             "normal": False,
             "binomial": False,
             "quantile": 0.5,
+            "colorbar": True,
+            "scalebar": True, #TODO: Fix this.
         }
 
         for key, value in kwargs.items():
@@ -261,3 +290,4 @@ class Ax:
         
         return
 
+#TODO: Make use of these more. And add plots here. 

@@ -55,7 +55,7 @@ mpl.rcParams["axes.prop_cycle"] = cycler(
 
 #TODO: Make a function that sets appropiate rcParams for the figure given figsize. 
 #TODO: Implement functionality first; find optimal settings later. 
-DEFAULT_FIGSIZE = (5.69/2, 3.9/2) # TODO: Change and adapt
+DEFAULT_FIGSIZE = (5.69, 3.9) # TODO: Change and adapt
 TOMMER = np.sqrt( DEFAULT_FIGSIZE[0]**2 + DEFAULT_FIGSIZE[1]**2)
 w = 1
 mpl.rcParams["axes.linewidth"] = w

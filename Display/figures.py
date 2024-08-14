@@ -171,6 +171,30 @@ class FigureSubplots(FigureSinglePlot):
         #TODO: Docstring
         #TODO: Better communicate that span is end point.
 
+        """
+        Create a subplot in the figure based on gridspec.
+
+        Parameters
+        ----------
+        row : int, optional
+            The row index of the subplot. The default is 0.
+        col : int, optional
+            The column index of the subplot. The default is 0.
+        row_span : int, optional
+            The end row index of the subplot. The default is None.
+        col_span : int, optional
+            The end column index of the subplot. The default is None.
+        **kwargs : dict, optional
+            The keyword arguments for the subplot. The default is:
+                {
+                "sharex": None,
+                "sharey": None,
+                "letter": "a",
+                "projection": None,
+                }
+
+        """
+
         subplot_kwargs = {
             "sharex": None,
             "sharey": None,
@@ -199,6 +223,9 @@ class FigureSubplots(FigureSinglePlot):
         return self.Axes[-1]
     
     def label_subplots(self, **kwargs):
+        """
+        Automatic labelling of the subplots.
+        """
         for i, Ax in enumerate(self.Axes):
             attr.add_alphabetic_label(Ax.ax, chr(i+97) , **kwargs)
         return
