@@ -18,7 +18,7 @@ def plane_level(height: np.array):
     C : np.array
         The coefficients of the plane level.
     """
-    XX, YY = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]))
+    XX, YY = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]), indexing='ij')
     data = np.c_[XX.ravel(), YY.ravel(), height.ravel()]
 
     order = 1    # 1: linear, 2: quadratic
