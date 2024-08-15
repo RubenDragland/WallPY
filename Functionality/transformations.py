@@ -18,7 +18,7 @@ def plane_level(height: np.array):
     C : np.array
         The coefficients of the plane level.
     """
-    XX, YY = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]))
+    XX, YY = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]), indexing='ij')
     data = np.c_[XX.ravel(), YY.ravel(), height.ravel()]
 
     order = 1    # 1: linear, 2: quadratic
@@ -62,9 +62,9 @@ def plane_level_heavyside(height:np.array, xmin:int, xmax:int):
     C : np.array
         The coefficients of the plane level.
     """
-    XX, YY = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]))
+    XX, YY = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]), indexing='ij')
 
-    XXROI, YYROI = np.meshgrid(np.arange(xmin, xmax), np.arange(height.shape[1]))
+    XXROI, YYROI = np.meshgrid(np.arange(xmin, xmax), np.arange(height.shape[1]), indexing='ij')
     data = np.c_[XXROI.ravel(), YYROI.ravel(), height[:,xmin:xmax].ravel()]
 
     order = 1    # 1: linear, 2: quadratic
@@ -99,14 +99,15 @@ def poly2D_least_squares(height: np.array, order: int, xmin:int=None, xmax:int=N
     """
 
     def find_lims(xmin, xmax, ymin, ymax, height):
+        #NOTE: x is defined as the first index and y as the second index, but this is not the case.
         if xmin is None:
             xmin = 0
         if xmax is None:
-            xmax = height.shape[0]
+            xmax = height.shape[1]
         if ymin is None:
             ymin = 0
         if ymax is None:
-            ymax = height.shape[1]
+            ymax = height.shape[0]
         return xmin, xmax, ymin, ymax
     
     def get_basis(x, y, order):
@@ -119,23 +120,22 @@ def poly2D_least_squares(height: np.array, order: int, xmin:int=None, xmax:int=N
 
     xmin, xmax, ymin, ymax = find_lims(xmin, xmax, ymin, ymax, height)
     x, y = np.arange(xmin, xmax), np.arange(ymin, ymax)
-    XROI, YROI = np.meshgrid(x, y)
+    XROI, YROI = np.meshgrid(y, x, indexing='ij') # NOTE: Looks wrong, but is correct.
     basis = get_basis(XROI.ravel(), YROI.ravel(), order)
 
     A = np.vstack(basis).T
-    b = height[xmin:xmax, ymin:ymax].ravel()
+    b = height[ymin:ymax, xmin:xmax].ravel()
 
     # C, r, rank, s = sp.linalg.lstsq(A, b)
-    c, _, _, _ = np.linalg.lstsq(A, b, rcond=None) #TODO: Find the best one
+    c, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
 
-    X, Y = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]))
+    X, Y = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]), indexing='ij')
     Z = np.sum(c[:, None, None] * np.array(get_basis(X, Y, order))
                 .reshape(len(basis), *X.shape), axis=0)
     
     return Z#, c #TODO: Should 2th degree polynomial also be retrieved from same area?
 
-def poly2D_3point_level(height: np.array, order: int, xpoints: list, ypoints:list):
-    #TODO: Consider: Needs N points for degree N. 
+def poly2D_3point_level(height: np.array, order: int, x_inds: list, y_inds:list):
     """
     Employs a least squares fit to find the polynomial of a set of points.
 
@@ -155,9 +155,9 @@ def poly2D_3point_level(height: np.array, order: int, xpoints: list, ypoints:lis
     C : np.array
         The coefficients of the polynomial.
     """
-    assert len(xpoints) >= order, "The number of points must be equal to the order of the polynomial."
-    assert len(ypoints) >= order, "The number of points must be equal to the order of the polynomial."
-    X, Y = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]))
+    assert len(x_inds) > order, "The number of points must be one larger than the order of the polynomial."
+    assert len(y_inds) > order, "The number of points must be one larger than the order of the polynomial."
+    X, Y = np.meshgrid(np.arange(height.shape[0]), np.arange(height.shape[1]), indexing='ij')
 
     def get_basis(x, y, order):
         basis = []
@@ -166,20 +166,16 @@ def poly2D_3point_level(height: np.array, order: int, xpoints: list, ypoints:lis
                 basis.append(x**j * y**i)
         return basis
     
-    # XPoints, YPoints = np.meshgrid(xpoints, ypoints)
-    xpoints = np.array(xpoints)
-    ypoints = np.array(ypoints)
+    #NOTE: Appears wrong, but is correct.
+    xpoints = np.array(y_inds)
+    ypoints = np.array(x_inds)
 
     basis = get_basis(xpoints.ravel(), ypoints.ravel(), order)
 
-
-
     A = np.vstack(basis).T
-    ind = np.vstack([xpoints, ypoints]).T
-    b = height[ypoints, xpoints].ravel() #? TODO: Changing these two worked. why?
+    b = height[xpoints, ypoints].ravel() 
 
-    # C, r, rank, s = sp.linalg.lstsq(A, b)
-    C, _, _, _ = np.linalg.lstsq(A, b, rcond=None) #TODO: Find the best one
+    C, _, _, _ = np.linalg.lstsq(A, b, rcond=None) 
 
     Z = np.sum(C[:, None, None] * np.array(get_basis(X, Y, order))
                 .reshape(len(basis), *X.shape), axis=0)
