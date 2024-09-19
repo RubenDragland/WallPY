@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 import skimage.restoration as rest
 import skimage.filters as filters
 
+from poly import calc_grain_size
+
 
 '''
 Code structure will be similar to the poly crystal class. 
@@ -110,8 +112,8 @@ class vectorPFM:
     
                 ax1.imshow(instance.grain_array, vmin=None, vmax=None)
 
-                ax1.plot([instance.roi_crop_x[0], instance.roi_crop_x[1], instance.roi_crop_x[1], instance.roi_crop_x[0], instance.roi_crop_x[0]], 
-                        [instance.roi_crop_y[0], instance.roi_crop_y[0], instance.roi_crop_y[1], instance.roi_crop_y[1], instance.roi_crop_y[0]], "r-")
+                # ax1.plot([instance.roi_crop_x[0], instance.roi_crop_x[1], instance.roi_crop_x[1], instance.roi_crop_x[0], instance.roi_crop_x[0]], 
+                        # [instance.roi_crop_y[0], instance.roi_crop_y[0], instance.roi_crop_y[1], instance.roi_crop_y[1], instance.roi_crop_y[0]], "r-")
 
                 # ax_inlet = ax1.inset_axes([0.65, 0.1, 0.35, 0.35])
 
@@ -119,7 +121,7 @@ class vectorPFM:
     
                 x = np.linspace(np.min(instance.data), np.max(instance.data), 2000)
 
-                ax2.hist(instance.data.flatten(), bins=69, density=True, label = "Data" )
+                ax2.hist(instance.data.flatten(), bins=1000, density=True, label = "Data" )
                 ax2.plot(x, instance.LPFM_params["kde"](x), label="KDE")
                 ax2.legend()
         
@@ -403,7 +405,7 @@ class orientationPFM:
             return data
         
         
-        def filtering(data):
+        def filter(data):
 
             # for index in self.LPFM_indices:
             #     # self.grain_arrays[index] = rest.denoise_bilateral(self.grain_arrays[index], win_size=5, mode='wrap')
@@ -417,10 +419,10 @@ class orientationPFM:
             data = align_orientation(data)
             data = crop_grain(data)
             if filtering:
-                data= filtering(data) #TODO: Move forwards and or make optional possibly. 
+                data= filter(data) #TODO: Move forwards and or make optional possibly. 
         else:
             data = merge_forward_backward()
-            data = filtering(data)
+            data = filter(data)
 
         self.data = data
         return 
