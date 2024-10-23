@@ -59,7 +59,7 @@ class FigureSinglePlot:
         "figsize": (DEFAULT_FIGSIZE[0], DEFAULT_FIGSIZE[1]),
         "dpi": 300,
         "transparent": False,
-        "standard_scale": True, #Meaning scaling rcParams to the figure size.
+        "standard_scale": False, #Meaning scaling rcParams to the figure size.
     } #TODO: Find the necessary kwargs
 
     def __init__(self, datafile, **kwargs): #TODO: DO not use datafile. 
@@ -116,7 +116,7 @@ class FigureSubplots(FigureSinglePlot):
             "dpi": 300,
             "nrows": 1,
             "ncols": 2,
-            "standard_size": True,
+            "standard_size": False,
             }
 
     Methods
@@ -135,7 +135,9 @@ class FigureSubplots(FigureSinglePlot):
         "filename": f"FigureSubplots_{int(time.time())}",
         "nrows": 1,
         "ncols": 2,
-        "standard_size": True,
+        "standard_size": False,
+        "wspace": None,
+        "hspace": None,
     } #TODO: Find the necessary kwargs
 
     def __init__(self, databatch, **kwargs ):
@@ -156,10 +158,10 @@ class FigureSubplots(FigureSinglePlot):
         # TODO: Option to set arb. figsize
         if self.kwargs["standard_size"]:
             self.fig = plt.figure(figsize=(self.kwargs["figsize"][0]*self.kwargs["ncols"], self.kwargs["figsize"][1]*self.kwargs["nrows"]))
-            self.gs = self.fig.add_gridspec(self.kwargs["nrows"], self.kwargs["ncols"])
+            self.gs = self.fig.add_gridspec(self.kwargs["nrows"], self.kwargs["ncols"], wspace=self.kwargs["wspace"], hspace=self.kwargs["hspace"])
         else:
             self.fig = plt.figure(figsize=(self.kwargs["figsize"]))
-            self.gs = self.fig.add_gridspec(self.kwargs["nrows"], self.kwargs["ncols"])
+            self.gs = self.fig.add_gridspec(self.kwargs["nrows"], self.kwargs["ncols"], wspace=self.kwargs["wspace"], hspace=self.kwargs["hspace"])
 
         if self.kwargs["standard_scale"]:
             adapt_mpl_fig(self.fig) #TODO: Introduced to get normal scale between figsize and rcParams.
@@ -222,10 +224,19 @@ class FigureSubplots(FigureSinglePlot):
 
         return self.Axes[-1]
     
-    def label_subplots(self, **kwargs):
+    def add_subplot(self, row=0, col=0, row_span=None, col_span=None, **kwargs):
+        return self.create_subplot(row=row, col=col, row_span=row_span, col_span=col_span, **kwargs)
+    
+    def label_subplots(self, ordered_list=None, **kwargs):
         """
         Automatic labelling of the subplots.
         """
-        for i, Ax in enumerate(self.Axes):
-            attr.add_alphabetic_label(Ax.ax, chr(i+97) , **kwargs)
+        if ordered_list is None:
+            ordered_list = self.Axes
+
+        for i, Ax_elem in enumerate(ordered_list):
+            attr.add_alphabetic_label(Ax_elem.ax, chr(i+97) , **kwargs)
         return
+    
+
+#TODO: Implement subfigures In additional to subplots. https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subfigures.html

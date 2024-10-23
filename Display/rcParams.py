@@ -46,12 +46,15 @@ magma_colors = magma_colors[[0, -1, 2, 1]]
 inferno_colors = plt.cm.inferno(np.linspace(0.15, 0.80, 4))
 inferno_colors = inferno_colors[[-1, 1, 2, 0]]
 
-colors = np.vstack((magma_colors, inferno_colors))
+cividis_colors = plt.cm.cividis(np.linspace(0.15, 0.80, 4))
+cividis_colors = cividis_colors[[0, -1, 2, 1]]
+
+colors = np.vstack((magma_colors, cividis_colors, inferno_colors, ))
 
 
 mpl.rcParams["axes.prop_cycle"] = cycler(
     color= colors) + cycler(
-    linestyle=["-", "--", "-.", ":", "-", "--", "-.", ":"] )
+    linestyle=["-", "--", "-.", ":", "-", "--", "-.", ":", "-", "--", "-.", ":"] )
 
 #TODO: Make a function that sets appropiate rcParams for the figure given figsize. 
 #TODO: Implement functionality first; find optimal settings later. 
@@ -76,6 +79,14 @@ mpl.rcParams["axes.labelsize"] = 12 * w
 mpl.rcParams["figure.figsize"] = DEFAULT_FIGSIZE  # (8, 6)
 mpl.rcParams["figure.constrained_layout.use"] = True
 plt.rcParams['image.cmap'] = 'magma'
+
+#TODO: Implement a way to do the following cmaps:
+#NOTE: cAFM: inferno
+#NOTE: KPFM: magma
+#NOTE: PFM: cividis
+#NOTE: height: gray
+#NOTE: EFM: plasma
+#NOTE: MFM: viridis
 
 
 size_settings = {

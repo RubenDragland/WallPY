@@ -44,7 +44,7 @@ def add_scalebar(ax, res, **kwargs):
         The ax object with the scalebar added.
     """
 
-    mu_formatter = lambda value, unit:   f"{value} "  +r"$\\upmu$m"
+    mu_formatter = lambda value, unit:   f"{value} "  +"$\\upmu$m"
     scale_kwargs ={
             "fixed_value": None,
             "units": f"um",
@@ -75,9 +75,9 @@ def add_scalebar(ax, res, **kwargs):
                 scale_kwargs[key] = value
 
     size = res*1e6
-    # if size * scale_kwargs["length_fraction"] * ax.get_images()[0].get_array().shape[1] > 1:
-    #     scale_kwargs["scale_formatter"] = mu_formatter
-    #TODO: Did not work with the formatter atm. Get italic for now. 
+    if size * scale_kwargs["length_fraction"] * ax.get_images()[0].get_array().shape[1] > 1:
+        scale_kwargs["scale_formatter"] = mu_formatter
+
 
     bar = ScaleBar(dx = size, **scale_kwargs)
     ax.add_artist(bar)
@@ -119,6 +119,9 @@ def add_polarization_direction(ax, **kwargs):
             "pos": (100, 100),
             "angle": 0,
             "ratio_size": 0.05, 
+            "edgecolor": None,
+            "facecolor": None,
+
     }
 
 
@@ -147,7 +150,7 @@ def add_polarization_direction(ax, **kwargs):
         width = r # TODO: Adjustable sizes possibly?
         dx = r* np.cos(np.deg2rad(arrow_kwargs["angle"]))
         dy = r * np.sin(np.deg2rad(arrow_kwargs["angle"]))
-        arrow = mpatches.Arrow(pos_tip[1]-dx, pos_tip[0]-dy, dx, dy,width = width, color=arrow_kwargs["color"], alpha=arrow_kwargs["alpha"], lw=arrow_kwargs["lw"])
+        arrow = mpatches.Arrow(pos_tip[1]-dx, pos_tip[0]-dy, dx, dy,width = width, facecolor=arrow_kwargs["color"], alpha=arrow_kwargs["alpha"], lw=arrow_kwargs["lw"], edgecolor=arrow_kwargs["edgecolor"])
 
         ax.add_patch(arrow)
 
@@ -160,7 +163,7 @@ def add_polarization_direction(ax, **kwargs):
 
         r= in_kwargs["size"]
         
-        circle = mpatches.Circle(pos_tip, radius=r, edgecolor=in_kwargs["color"], alpha=in_kwargs["alpha"], lw=in_kwargs["lw"], facecolor="none") #TODO: Fix kwargs.
+        circle = mpatches.Circle(pos_tip, radius=r, edgecolor=in_kwargs["color"], alpha=in_kwargs["alpha"], lw=in_kwargs["lw"], fill = False ) #TODO: Fix kwargs.
         ax.add_patch(circle)
 
         cross_path_data = [
@@ -170,7 +173,7 @@ def add_polarization_direction(ax, **kwargs):
 
         cross_path = Path(cross_path_data, [Path.MOVETO, Path.LINETO, Path.MOVETO, Path.LINETO])
 
-        cross = PathPatch(cross_path, color= in_kwargs["color"], alpha=in_kwargs["alpha"], lw=in_kwargs["lw"])
+        cross = PathPatch(cross_path, color= in_kwargs["color"], alpha=in_kwargs["alpha"], lw=in_kwargs["lw"], edgecolor=in_kwargs["edgecolor"])
         ax.add_patch(cross)
 
         return
@@ -182,10 +185,10 @@ def add_polarization_direction(ax, **kwargs):
 
         r = out_kwargs["size"]
 
-        circle = mpatches.Circle(pos_tip, radius=r, edgecolor=out_kwargs["color"], alpha=out_kwargs["alpha"], lw=out_kwargs["lw"], facecolor="none") #TODO: Fix kwargs.
+        circle = mpatches.Circle(pos_tip, radius=r, edgecolor=out_kwargs["color"], alpha=out_kwargs["alpha"], lw=out_kwargs["lw"] , fill=False) #TODO: Fix kwargs.
         ax.add_patch(circle)
 
-        dot = mpatches.Circle(pos_tip, radius=r/5, edgecolor=out_kwargs["color"], alpha=out_kwargs["alpha"], lw=out_kwargs["lw"], facecolor=out_kwargs["color"]) #TODO: Fix kwargs.
+        dot = mpatches.Circle(pos_tip, radius=r/5, alpha=out_kwargs["alpha"], lw=out_kwargs["lw"], facecolor=out_kwargs["color"], edgecolor=out_kwargs["edgecolor"]) #TODO: Fix kwargs.
 
         ax.add_patch(dot)
 
@@ -198,7 +201,7 @@ def add_polarization_direction(ax, **kwargs):
 
     }
 
-    symbols[polarization_kwargs["type"]](ax, polarization_kwargs["pos"], ax.get_images()[0].get_array().shape, **polarization_kwargs)
+    symbols[polarization_kwargs["type"]](ax, polarization_kwargs["pos"], **polarization_kwargs)
 
     return ax
 

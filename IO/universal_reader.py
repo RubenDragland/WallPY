@@ -94,16 +94,18 @@ class GwyFile:
 
 
     keywords = {
+            "ampMFM": ["AmplitudeActual"],
             "Height": ["Height"],
             "Current": ["Current", "Iprobe"],
-            "Deflection": ["DFL", "Deflection"],
+            "Deflection": ["DFL", "Deflection",],
             "ZSensor": ["ZSensor", "Z-Axis"],
             "Voltage": ["Voltage", "Ext1", "Peak Force Error"], #TODO: Know how to sort these. Include Channels etc. Remember to update both or remove gwyfile from classes. This one is the updated one. Ext1 and Iprobe have weird current amplifiers, which make phase not retrievable.
             "VPFM": ["VPFM", "Ext2"],
             "LPFM": ["LPFM", "Ext3"],
-            "Amplitude": ["Amp", "Amplitude", "Mag"],
-            "Phase": ["Phase"],
-            "Potential": ["Surf", "Pot"], #TODO: Check if these work. And check cypher. 
+            "Amplitude": ["Amp", "Amplitude", "Mag", "AmplitudeError"],
+            "Phase": ["Phase"], #TODO: Ambigious; many different phases going into the same. 
+            "Potential": ["Surf", "Pot", "Potential"],
+             #TODO: Check if these work. And check cypher. 
         }
     modes = {
             "Forward": ["F:", "Trace", "Forward", "forward"],
@@ -144,6 +146,7 @@ class GwyFile:
         oname = self.filename if self.kwargs["oname"] is None else self.kwargs["oname"]
 
         self.opath = os.path.join(opath, oname + ".hdf5")
+        self.oname = oname
 
         try:
 
@@ -167,6 +170,7 @@ class GwyFile:
 
         obj = gwy.load(self.fullpath)
         channels = gwy.util.get_datafields(obj)
+
 
         self.channel_names = []
         print("Channels found: ")

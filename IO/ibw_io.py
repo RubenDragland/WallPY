@@ -28,8 +28,6 @@ and will be as follows:
 1. A Batch wrapper that can convert all scans in a folder of data. Argparse-file perhaps? Or Wrapper class. 
 2. A File wrapper that can convert a single file.
 
-
-
 """
 
 
@@ -56,15 +54,49 @@ class CypherFile:
     
 
     def __init__(self, path:str, filename:str, **kwargs):
+
         """
         path: path to folder
         filename: filename of scan
+
+        kwargs = {
+            "opath": None
+            "oname": None,
+        }
         """
-        self.path = path
-        self.filename = filename
-        self.fullpath = os.path.join(path, filename+".ibw")
-        self.opath = os.path.join(self.path, self.filename + ".hdf5")
-        self.kwargs = kwargs
+        self.kwargs = {
+            "opath": None,
+            "oname": None,
+            "fullpath": None,
+
+        }
+
+        for key, value in kwargs.items():
+            if key in self.kwargs:
+                self.kwargs[key] = value
+
+
+        if kwargs["fullpath"] is not None:
+            self.fullpath = kwargs["fullpath"]
+            self.path = os.path.dirname(self.fullpath)
+            self.filename = os.path.basename(self.fullpath)[:-4]
+        else:
+            self.path = path
+            self.filename = filename[:-4] if filename.endswith(".ibw") else filename
+            self.fullpath = os.path.join(self.path, self.filename +".ibw") 
+        
+        opath = self.path if self.kwargs["opath"] is None else self.kwargs["opath"]
+        oname = self.filename if self.kwargs["oname"] is None else self.kwargs["oname"]
+
+        self.opath = os.path.join(opath, oname + ".hdf5")
+        self.oname = oname
+
+        #NOTE: Updating based on universal reader structure.
+        # self.path = path
+        # self.filename = filename
+        # self.fullpath = os.path.join(path, filename+".ibw")
+        # self.opath = os.path.join(self.path, self.filename + ".hdf5")
+        # self.kwargs = kwargs
 
     def __call__(self):
         """

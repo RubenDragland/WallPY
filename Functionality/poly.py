@@ -2,7 +2,7 @@
 
 from typing import Any
 import numpy as np
-import pyclesperanto_prototype as cle
+# import pyclesperanto_prototype as cle
 import scipy as sp
 import cv2
 import pandas as pd
@@ -378,7 +378,8 @@ class Grain:
 
             self.angles_points0.extend([angle]*(len(proj0_grad1) + len(proj0_grad2)))
             self.angles_points90.extend([angle]*(len(proj90_grad1) + len(proj90_grad2)))
-
+        
+        #NOTE: Here assumed that pixels are circular. Or no, completely ok.
         self.sizes = np.array(self.sizes)*self.res
         self.sizes0 = np.array(self.sizes0)*self.res
         self.sizes90 = np.array(self.sizes90)*self.res
@@ -748,7 +749,7 @@ def skm_crossection(z, xs, ys, lw=4, order=5, reduce_func=np.median):
 
     '''
 
-    start = np.array([ys[0], xs[0]]) #TODO: Check.
+    start = np.array([ys[0], xs[0]]) #TODO: Check. NOTE: Correct
     end = np.array([ys[1], xs[1]])
 
     intensity = skm.profile_line(z, start, end, linewidth=lw, order=order, reduce_func=reduce_func)

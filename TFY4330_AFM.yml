@@ -1,4 +1,4 @@
-name: PolyPY
+name: TFY4330_AFM
 channels:
   - anaconda
   - conda-forge

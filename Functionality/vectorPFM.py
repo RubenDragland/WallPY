@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import sys
+import h5py
 
 import scipy.ndimage as ndi
 import scipy.stats as stats
@@ -15,6 +16,7 @@ import rcParams
 import matplotlib.pyplot as plt
 import skimage.restoration as rest
 import skimage.filters as filters
+from tqdm import tqdm
 
 from poly import calc_grain_size
 
@@ -43,13 +45,30 @@ class vectorPFM:
         ofile: filename of the output file
         opath: path to save the output file
 
+        Parameters
+        ----------
+        orientationPFMs : list
+            List of orientationPFM instances.
+        ofile : str
+            Output filename.
+        opath : str, optional
+            Output path. The default is ''.
+        **kwargs : TYPE
+            DESCRIPTION.
 
+        Returns
+        -------
+        None
+        
         """
 
         self.instances = orientationPFMs
         self.ofile = ofile
         self.opath = opath
         self.kwargs = kwargs
+        self.full_path = os.path.join(self.opath, self.ofile)
+
+        self.kwargs["filtering"] = False if "filtering" not in self.kwargs.keys() else self.kwargs["filtering"]
 
         return
     
@@ -59,6 +78,35 @@ class vectorPFM:
         """
 
         self.process_instances()
+        self.save()
+
+        return
+    
+    def save(self):
+        """
+        Save the processed data to a new hfile holding all necessary data for plotting etc. 
+        """
+
+        with h5py.File(self.full_path + ".hdf5", "w") as hfile:
+            for i, instance in enumerate(self.instances):
+                name = f"orientation_{str(i)}"
+                hfile.create_group(f"{name}")
+                for key, value in instance.LPFM_params.items():
+                    hfile[name].attrs[key] = value
+                hfile[name].attrs["orientation_deg"] = instance.orientation_deg
+                hfile[name].create_dataset("processed", data=instance.processed_data)
+
+        return
+    
+    def perform_vpfm(self):
+        """
+        Perform the vectorPFM analysis on a list of rotatedPFM instances
+        """
+
+        for instance in tqdm(self.instances):
+            instance.preprocess(filtering=self.kwargs["filtering"])
+            instance.otsu_based_process()
+        
         self.save()
 
         return
@@ -245,12 +293,208 @@ class vectorPFM:
             instance.automatic_roi(instance.kde_biomodality, auto_x, auto_y, margin_x, margin_y, counts)
         return
     
-    def save(self):
-        """
-        Save the processed data to a new hfile holding all necessary data for plotting etc. 
-        """
+
+    
+
+class rotatedPFM:
+    """
+    Updated class for processing a single grain in a PFM image used for vectorPFM.
+    """
+
+    def __init__(self, gwyfile:object, orientation_deg:float, grain_borders: list, roi_x_ref=None, roi_y_ref=None, processed_array:np.array=None, **kwargs ):
+
+        def read_LPFM_indices_from_channels(channel_names):
+            """
+            Read the LPFM indices from the gwyfile
+            """
+            LPFM_indices = [int(str(ch).split("_")[-1]) for ch in channel_names if "LPFM" in ch]
+
+            return LPFM_indices
+
+        self.gwyfile = gwyfile
+        self.LPFM_params = {}
+        self.LPFM_indices = read_LPFM_indices_from_channels(gwyfile.channel_names) #NOTE: Always just forward and backward scans.
+
+        if processed_array is not None:
+            self.data = processed_array
+        else:
+            self.data = None
+        
+        # Ignore the gwyfile thing for now. 
+
+        raw_data = gwyfile[self.LPFM_indices[0]] # Retrieve one of the images to get the mask shape. 
+        res = gwyfile.index_metadata(self.LPFM_indices[0], "xres")
+        self.grain_diameter, self.grain_area, self.mask = calc_grain_size(raw_data, grain_borders, res)
+
+        self.orientation_deg = orientation_deg
+        self.orientation_rad = np.deg2rad(orientation_deg)
+        self.grain_borders = grain_borders
+        self.roi_x_ref = roi_x_ref
+        self.roi_y_ref = roi_y_ref
+        self.kwargs = kwargs
 
         return
+    
+    def preprocess(self, filtering=False):
+        """
+        Preprocess the data: Merge, orient, (filter), crop.
+        """
+
+        def merge_forward_backward():
+            """
+            Merge the forward and backward scans
+            """
+            data = np.mean([self.gwyfile[self.LPFM_indices[i]] for i in range(len(self.LPFM_indices))], axis=0)
+            return data
+        
+        def align_orientation(data):
+            """
+            Align the PFM image to the defined 0 orientation
+            """
+            data = ndi.rotate(data, angle=self.orientation_deg, reshape=False)
+            return data
+        
+        def filter(data):
+            data = rest.denoise_bilateral(data, win_size=5, mode='symmetric')
+            return data
+    
+        def crop_grain(data):
+            data = np.abs(data*self.mask)
+            reset0 = np.isclose(data, 0, atol=0.1) # Minimises rotation artifacts, noise, and influcences from outside the mask. 
+            data[reset0] = np.nan
+
+            min_x = np.min(self.grain_borders[:, 0])
+            max_x = np.max(self.grain_borders[:, 0])
+            min_y = np.min(self.grain_borders[:, 1])
+            max_y = np.max(self.grain_borders[:, 1])
+
+            reduced_data =  data[min_y:max_y, min_x:max_x]
+            return reduced_data
+        
+        if self.data is None:
+
+            data = merge_forward_backward()
+            data = align_orientation(data)
+            if filtering:
+                data = filter(data)
+            data = crop_grain(data)
+            self.data = data
+        
+        return
+    
+    def otsu_based_process(self):
+        """
+        Perform Otsu thresholding on the data; giving us to thresholded domains.
+        """
+
+        print(stats.mode(self.data.flatten(), nan_policy="omit")[:2])
+        nan_filtered_data = self.data.flatten()[~np.isnan(self.data.flatten())]
+        kde = stats.gaussian_kde(nan_filtered_data)
+        pts = np.linspace(np.min(nan_filtered_data), np.max(nan_filtered_data), 3000)
+        # thresh_value = filters.threshold_otsu(self.data) #Only used 256 bins
+        print(nan_filtered_data.shape)
+        print(nan_filtered_data.min(), nan_filtered_data.max(), nan_filtered_data.mean(), np.median(nan_filtered_data))
+        print(np.isnan(nan_filtered_data).sum())
+        #NOTE: Believe thresholding kde data does not work. Try providing hist instead
+        # thresh_value = filters.threshold_otsu(hist= (pts,kde(pts)))
+        thresh_value = filters.threshold_otsu(nan_filtered_data, nbins=256 )
+        print(thresh_value)
+
+        d1_bool = nan_filtered_data < thresh_value
+        d2_bool = nan_filtered_data >= thresh_value
+        domain1 = nan_filtered_data[d1_bool]
+        domain2 = nan_filtered_data[d2_bool]
+
+        # otsu_param = (d1_bool.sum()*domain1.std()**2 + d2_bool.sum()*domain2.std()**2) / (self.data.std()**2 * self.data.size)
+        otsu_param = (d1_bool.sum()*domain1.std()**2 + d2_bool.sum()*domain2.std()**2) / (nan_filtered_data.std()**2 * nan_filtered_data.size)
+
+        self.LPFM_params["otsu_thresh"] = thresh_value
+        self.LPFM_params["otsu"] = otsu_param
+
+        shapiro_s, shapiro_p = stats.shapiro( kde.resample(size=3000) )
+
+        self.LPFM_params["shapiro_s"] = shapiro_s
+        self.LPFM_params["shapiro_p"] = shapiro_p
+
+        def gauss(x,mu,sigma,A):
+            return A**2*np.exp(-(x-mu)**2/2/sigma**2)
+        
+        gauss1 = opt.curve_fit(gauss, pts[pts<thresh_value], kde(pts[pts<thresh_value]), p0=[np.median(domain1), np.std(domain1), 1])
+        gauss2 = opt.curve_fit(gauss, pts[pts>thresh_value], kde(pts[pts>thresh_value]), p0=[np.median(domain2), np.std(domain2), 1])
+
+        def unimodal_condition(mu1, sigma1, mu2, sigma2):
+            """
+            Condition for unimodality
+            Behboodian, J (1970). "On the modes of a mixture of two normal distributions". Technometrics. 12 (1): 131–139. doi:10.2307/1267357. JSTOR 1267357.
+            """
+            return np.abs(mu1 - mu2) / (2*np.min(np.abs([sigma1 , sigma2])))
+
+        def eisenberger_unimodal_condition(mu1, sigma1, mu2, sigma2):
+            """
+            TODO: Find source.
+            """
+            return (mu1-mu2)**2 * 4*(sigma1**2 + sigma2**2) / (27*sigma1**2*sigma2**2)
+        
+        uc1 = unimodal_condition(gauss1[0][0], gauss1[0][1], gauss2[0][0], gauss2[0][1])
+        uc2 = eisenberger_unimodal_condition(gauss1[0][0], gauss1[0][1], gauss2[0][0], gauss2[0][1])
+
+        self.LPFM_params["gauss1"] = gauss1[0]
+        self.LPFM_params["gauss2"] = gauss2[0]
+        self.LPFM_params["uc1"] = uc1
+        self.LPFM_params["uc2"] = uc2
+
+        self.processed_data = nan_filtered_data
+
+        return
+    
+    def inspect_rotated_cropped(self, borders):
+        fig, axes = plt.subplots(1, len(self.gwyfile.channel_names), figsize=(len(self.gwyfile.channel_names)*5, 5))
+
+        fig.suptitle(f"Rotated {self.orientation_deg} degrees")
+        
+
+        for i, (ax, channel) in enumerate(zip(axes.reshape(-1), self.gwyfile.channel_names)):
+            ind = int(channel.split("_")[-1])
+
+            data = self.gwyfile[ind]
+
+            hist, edges = np.histogram(data, bins=100)
+
+            pvalue = np.max(hist)
+            peak = edges[np.argmax(hist)]
+
+            lower = edges[np.where(hist > pvalue*0.5)[0][0]]
+            upper = edges[np.where(hist > pvalue*0.5)[0][-1]]
+
+            vmin = lower
+            vmax = upper
+
+            data = ndi.rotate(data, angle=self.orientation_deg, reshape=False)
+
+            grain_d, grain_a, grain_mask = calc_grain_size(data, borders, self.gwyfile.index_metadata(ind, "xres"))
+
+            if i == 0:
+                data = data*grain_mask
+                reset0 = np.isclose(data, 0, atol=0.1) # Minimises rotation artifacts, noise, and influcences from outside the mask. 
+                data[reset0] = np.nan
+
+                min_x = np.min(self.grain_borders[:, 0])
+                max_x = np.max(self.grain_borders[:, 0])
+                min_y = np.min(self.grain_borders[:, 1])
+                max_y = np.max(self.grain_borders[:, 1])
+
+                data =  data[min_y:max_y, min_x:max_x]
+
+
+
+            ax.imshow(data, cmap="magma",) #vmin=vmin, vmax=vmax)
+            ax.set_title(channel)
+        plt.show()
+        return data
+
+
+
+
     
 
 class orientationPFM:
@@ -450,6 +694,7 @@ class orientationPFM:
 
         self.LPFM_params["otsu_thresh"] = thresh_value
         self.LPFM_params["otsu"] = otsu_param
+
         return
 
 
