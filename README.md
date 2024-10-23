@@ -1,11 +1,11 @@
 # WallPY
 
-Repo for handling AFM data primarly in .ibw-files. 
-Will include conversion to hdf5-format using hystorian.
-Hystorian will also provide the ability to perform transformations in-place and override converted hdf5 files.
-Implementation of useful gwyddion functionality since gwypy is soon to be completely deprecated.
-Finally, essential and fundamental plotting functions for more efficient and re-usable plotting than achieved in gwyddion.
+Repo for handling AFM data from a wide range of different microscopes. 
+Currently, this is enabled by combining Gwyddion and the python package gwyfile, but with added structure and code-awareness.
+Additionally, .ibw-files can be read directly using the hystorian package. 
 
-In addition, WallPY can handle AFM-data from most AFM distributors, such as NT-MDT and Nanosurf, after manually exporting the raw data file to .gwy-file using gwyddion. 
+The repo presents a structured hdf5 file format for storing raw, sorted, and processed data.
+It also holds a lot of functionality for analysing SPM data, such as flattening, filtering, crossectioning, and advanced algorithms.
+For displaying data, the includes an overhead of the matplotlib library, making frequently used functionality more accessible and easier to use.
 
 
