@@ -342,6 +342,7 @@ class GwyFile:
                 kwargs[key] = value
         
         # Creates new path and name for the new file.
+        new_name = new_name +"_sorted" if new_name == self.oname else new_name
         new_path = self.path if kwargs['opath'] is None else kwargs["opath"]
         new_path = new_path[:-5] if new_path.endswith(".hdf5") else new_path 
         new_opath = os.path.join(new_path, new_name + ".hdf5")
@@ -438,7 +439,7 @@ class GwyFile:
 
         return
     
-    def copy_n_remove(self, new_name: str, keep: list, name=True, **kwargs):
+    def copy_n_remove(self, keep: list, new_name:str = None, name=True, **kwargs):
         """
         Copies the channels in keep to a new file and removes the original file. 
 
@@ -462,9 +463,12 @@ class GwyFile:
             A new GwyFile instance with the copied channels
         """
 
+        new_name = self.oname + "_sorted" if new_name is None else new_name
+
         assert os.path.exists(self.opath), "Original file not found."
 
         new = self.copy_2_other(new_name, keep, name, **kwargs)
+
         with h5py.File(self.opath, "r+") as f:
             del f
         try:
@@ -475,7 +479,7 @@ class GwyFile:
             return new
     
 
-    def create_overview_file(self, quantile: float = 0.69)->None:
+    def create_overview_file(self, quantile: float = 0.31)->None:
         """
         Creates an overview file of the channels in the hdf5 file.
         The overview file is saved in the same folder as the hdf5 file.
@@ -517,7 +521,7 @@ class GwyFile:
             ax.set_title(channel)
         
         savepath = self.path if self.kwargs["opath"] is None else self.kwargs["opath"]
-        savename = self.filename
+        savename = self.oname
         plt.savefig(os.path.join(savepath, savename + "_overview.png"))
         plt.show()
         return
