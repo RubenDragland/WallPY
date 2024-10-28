@@ -76,8 +76,9 @@ class FigureSinglePlot:
         return
 
     def __call__(self):
+        ext = "." + self.kwargs["extension"] if not self.kwargs["extension"].startswith(".") else self.kwargs["extension"]
 
-        self.fig.savefig(os.path.join(self.kwargs["path"],self.kwargs["filename"]+self.kwargs["extension"]) ,dpi=self.kwargs["dpi"], transparent=self.kwargs["transparent"]) 
+        self.fig.savefig(os.path.join(self.kwargs["path"],self.kwargs["filename"]+ext) ,dpi=self.kwargs["dpi"], transparent=self.kwargs["transparent"]) 
 
         if self.kwargs["show"]: #TODO: Create defaults
             plt.show()
