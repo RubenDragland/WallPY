@@ -105,6 +105,7 @@ class GwyFile:
             "Amplitude": ["Amp", "Amplitude", "Mag", "AmplitudeError"],
             "Phase": ["Phase"], #TODO: Ambigious; many different phases going into the same. 
             "Potential": ["Surf", "Pot", "Potential"],
+            "BV": ["BV", "Bias", "BiasVoltage"],
              #TODO: Check if these work. And check cypher. 
         }
     modes = {
@@ -178,6 +179,9 @@ class GwyFile:
         with h5py.File(self.opath, "w") as f:
             
             for id, key in enumerate(channels.keys()):
+                
+                if "Optical" in key:
+                    continue 
                 
                 category = str(find_key(GwyFile.keywords, key))
                 mode = str(find_key(GwyFile.modes, key))
