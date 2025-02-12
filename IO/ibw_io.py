@@ -1,5 +1,5 @@
 
-
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import hystorian as hy
@@ -43,8 +43,8 @@ class CypherFile:
             "D": ["DFL", "Deflection", r"^D."],
             "Z": ["ZSensor", r"^Z."],
             # "V": ["Voltage"],
-            # "Amplitude": ["Amp", "Amplitude", "Mag"], TODO: Add these channels. Bit jalla, but okay.
-            # "Phase": ["Phase"],
+            "A": ["A","Amp", "Amplitude", "Mag"], #TODO: Add these channels. Bit jalla, but okay.
+            "P": ["P","Phase"],
         }
     modes = {
             "T": ["F:", "Trace", "Forward", ".T$"],
@@ -76,15 +76,16 @@ class CypherFile:
                 self.kwargs[key] = value
 
 
-        if kwargs["fullpath"] is not None:
+        if self.kwargs["fullpath"] is not None:
             self.fullpath = kwargs["fullpath"]
             self.path = os.path.dirname(self.fullpath)
-            self.filename = os.path.basename(self.fullpath)[:-4]
+            self.filename = os.path.basename(self.fullpath)
+            self.filename = self.filename[:-4] if filename.endswith(".ibw") else self.filename
         else:
             self.path = path
             self.filename = filename[:-4] if filename.endswith(".ibw") else filename
-            self.fullpath = os.path.join(self.path, self.filename +".ibw") 
         
+        self.fullpath = os.path.join(self.path, self.filename +".ibw") 
         opath = self.path if self.kwargs["opath"] is None else self.kwargs["opath"]
         oname = self.filename if self.kwargs["oname"] is None else self.kwargs["oname"]
 
@@ -105,12 +106,15 @@ class CypherFile:
     
         self.convert_ibw()
 
-        im = self["CR"]
+        im = self["HR"]
         self.x_dim = im.shape[1]
         self.y_dim = im.shape[0]
 
         self.x_res = float(self.get_metadata_key("ScanSize")) / float(self.get_metadata_key("PointsLines"))
         self.y_res = self.x_res
+
+
+
 
         return
     
@@ -128,13 +132,22 @@ class CypherFile:
             "CT": create_path("CurrentTrace"),
             "DR": create_path("DeflectionRetrace"),
             "HR": create_path("HeightRetrace"),
+            "HT": create_path("HeightTrace"),
             "ZR": create_path("ZSensorRetrace"),
+            "AT": create_path("AmplitudeTrace"),
+            "AR": create_path("AmplitudeRetrace"),
+            "PR": create_path("PhaseRetrace"),
+            "PT": create_path("PhaseTrace"),
         }
          
         try:
             with h5py.File(self.opath, "r") as f:
                 key_input = f"{key_input}" #TODO: Add space or not?
                 key = find_key(CypherFile.keywords, key_input) + find_key(CypherFile.modes, key_input)
+
+                # print(key)
+
+                # print(keys2paths[key])
 
                 return np.array(f[keys2paths[key]])
         except KeyError:
@@ -205,3 +218,50 @@ class CypherFile:
         self.opath = os.path.join(self.path, self.filename + ".hdf5")
 
         return
+    
+    # def create_overview_file(self, quantile: float = 0.31)->None:
+    #     """
+    #     Creates an overview file of the channels in the hdf5 file.
+    #     The overview file is saved in the same folder as the hdf5 file.
+    #     The overview file is named after the original file with "_overview" appended, as png.
+
+    #     Parameters
+    #     ----------
+    #     quantile: float, optional
+    #         The quantile of the histogram to use for the colorbar. The default is 0.69.
+    #         The higher the quantile, the more saturated the colors will be.
+        
+    #     Returns
+    #     -------
+    #     None
+    #     """
+
+    #     fig, axes = plt.subplots(1, len(self.channel_names), figsize=(len(self.channel_names)*5, 5))
+
+    #     for ax, channel in zip(axes.reshape(-1), self.channel_names):
+    #         ind = int(channel.split("_")[-1])
+    #         data = self[ind]
+
+    #         #TODO: Consider using kde instead to automatically account for data size via Scott's rule. 
+    #         hist, edges = np.histogram(data, bins=100)
+
+    #         # Find peak value
+    #         pvalue = np.max(hist)
+    #         peak = edges[np.argmax(hist)]
+
+    #         # Find lower and upper bounds
+    #         lower = edges[np.where(hist > pvalue*quantile)[0][0]]
+    #         upper = edges[np.where(hist > pvalue*quantile)[0][-1]]
+
+    #         vmin = lower
+    #         vmax = upper
+
+
+    #         ax.imshow(data, cmap="magma", vmin=vmin, vmax=vmax)
+    #         ax.set_title(channel)
+        
+    #     savepath = self.path if self.kwargs["opath"] is None else self.kwargs["opath"]
+    #     savename = self.oname
+    #     plt.savefig(os.path.join(savepath, savename + "_overview.png"))
+    #     plt.show()
+    #     return
