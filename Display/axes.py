@@ -76,8 +76,16 @@ class Ax:
             if key not in self.kwargs:
                 self.kwargs[key] = value
         
-        self.set_labels()
+        # self.set_labels() # Also caused kernel crash. Depreciated?
         return
+    
+    # def __getattribute__(self, name: str):
+    #     try:
+    #         return getattr(self.ax, name)
+    #     except AttributeError:
+    #         print("Function call not found in ax class or in matplotlib ax class...")
+    #     finally:
+    #         return
     
     def set_labels(self):
         """

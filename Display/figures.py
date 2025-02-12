@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 from rcParams import *
 from axes import Ax
-# from ..IO.classes import CypherBatch, CypherFile
 import os
 import time
 import attributes as attr
@@ -21,6 +20,7 @@ def plot_overview(gwyfile, size=10):
         ax.set_title(name)
     plt.show()
     return
+
 
 class FigureSinglePlot:
 
@@ -62,7 +62,7 @@ class FigureSinglePlot:
         "standard_scale": False, #Meaning scaling rcParams to the figure size.
     } #TODO: Find the necessary kwargs
 
-    def __init__(self, datafile, **kwargs): #TODO: DO not use datafile. 
+    def __init__(self, datafile=None, **kwargs): #TODO: DO not use datafile. 
 
         self.datafile = datafile
         self.kwargs = kwargs
@@ -71,7 +71,7 @@ class FigureSinglePlot:
             if key not in self.kwargs:
                 self.kwargs[key] = value
         
-        self.create_figure()     
+        self.create_figure()     #TODO: Reset afterwards. 
 
         return
 
@@ -85,6 +85,14 @@ class FigureSinglePlot:
         
         return
     
+    # def __getattribute__(self, name: str): #Figure out why this makes the kernel crash.
+    #     try:
+    #         return getattr(self.fig, name)
+    #     except AttributeError:
+    #         print("Function call not found in figure class or in matplotlib figure class...")
+    #     finally:
+    #         return
+    
     def create_figure(self): #-> tuple(plt.figure, Ax):
 
         self.fig = plt.figure(figsize=(self.kwargs["figsize"]))
@@ -94,9 +102,9 @@ class FigureSinglePlot:
 
         self.Ax = Ax(self.fig, **self.kwargs)
 
-        return self.fig, self.Ax 
-    
-        
+        # return self.fig, self.Ax 
+        return
+          
 class FigureSubplots(FigureSinglePlot):
 
     """
@@ -141,7 +149,7 @@ class FigureSubplots(FigureSinglePlot):
         "hspace": None,
     } #TODO: Find the necessary kwargs
 
-    def __init__(self, databatch, **kwargs ):
+    def __init__(self, databatch=None, **kwargs ):
         #TODO: Not necessary to include data file. 
 
         self.kwargs = kwargs
@@ -238,6 +246,8 @@ class FigureSubplots(FigureSinglePlot):
         for i, Ax_elem in enumerate(ordered_list):
             attr.add_alphabetic_label(Ax_elem.ax, chr(i+97) , **kwargs)
         return
+    #NOTE: Sarita noted that box_alpha is not consistent when calling this function.
+    #TODO: Fix this.
     
 
 #TODO: Implement subfigures In additional to subplots. https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subfigures.html
