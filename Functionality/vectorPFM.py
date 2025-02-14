@@ -697,9 +697,6 @@ class orientationPFM:
 
         return
 
-
-    
-
     def roi_shapiro_test(self):
 
         assert self.data is not None, "No data provided"
